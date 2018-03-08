@@ -6,6 +6,7 @@ using System.Net;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.Bitcoin.Configuration;
+using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.Utilities;
 using Stratis.Bitcoin.Utilities.Extensions;
 
@@ -101,6 +102,9 @@ namespace Stratis.Bitcoin.P2P
         /// <summary>Logger factory to create loggers.</summary>
         private readonly ILoggerFactory loggerFactory;
 
+        /// <summary>Peer banning providor.  Used to validate against the Peers address store.</summary>
+        private readonly IPeerBanning peerBanning;
+
         /// <inheritdoc />
         public ConcurrentDictionary<IPEndPoint, PeerAddress> Peers { get; private set; }
 
@@ -114,7 +118,7 @@ namespace Stratis.Bitcoin.P2P
         public IPeerSelector PeerSelector { get; private set; }
 
         /// <summary>Constructor used by dependency injection.</summary>
-        public PeerAddressManager(IDateTimeProvider dateTimeProvider, DataFolder peerFilePath, ILoggerFactory loggerFactory)
+        public PeerAddressManager(IDateTimeProvider dateTimeProvider, DataFolder peerFilePath, ILoggerFactory loggerFactory, IPeerBanning peerBanning)
         {
             this.dateTimeProvider = dateTimeProvider;
             this.loggerFactory = loggerFactory;
@@ -122,6 +126,7 @@ namespace Stratis.Bitcoin.P2P
             this.Peers = new ConcurrentDictionary<IPEndPoint, PeerAddress>();
             this.PeerFilePath = peerFilePath;
             this.PeerSelector = new PeerSelector(this.dateTimeProvider, this.loggerFactory, this.Peers);
+            this.peerBanning = peerBanning;
         }
 
         /// <inheritdoc />
@@ -131,7 +136,8 @@ namespace Stratis.Bitcoin.P2P
             var peers = fileStorage.LoadByFileName(PeerFileName);
             peers.ForEach(peer =>
             {
-                this.Peers.TryAdd(peer.Endpoint, peer);
+                if (!this.peerBanning.IsBanned(peer.Endpoint))
+                    this.Peers.TryAdd(peer.Endpoint, peer);
             });
         }
 
@@ -142,13 +148,19 @@ namespace Stratis.Bitcoin.P2P
                 return;
 
             var fileStorage = new FileStorage<List<PeerAddress>>(this.PeerFilePath.AddressManagerFilePath);
-            fileStorage.SaveToFile(this.Peers.OrderByDescending(p => p.Value.LastConnectionSuccess).Select(p => p.Value).ToList(), PeerFileName);
+            fileStorage.SaveToFile(this.Peers
+                .Where(p => !this.peerBanning.IsBanned(p.Value.Endpoint))
+                .OrderByDescending(p => p.Value.LastConnectionSuccess)
+                .Select(p => p.Value).ToList(), PeerFileName);
         }
 
         /// <inheritdoc/>
         public void AddPeer(IPEndPoint endPoint, IPAddress source)
         {
             if (!endPoint.Address.IsRoutable(true))
+                return;
+
+            if (this.peerBanning.IsBanned(endPoint))
                 return;
 
             var peerToAdd = PeerAddress.Create(endPoint, source);
@@ -160,7 +172,8 @@ namespace Stratis.Bitcoin.P2P
         {
             foreach (var endPoint in endPoints)
             {
-                this.AddPeer(endPoint, source);
+                if (!this.peerBanning.IsBanned(endPoint))
+                    this.AddPeer(endPoint, source);
             }
         }
 

@@ -83,7 +83,7 @@ namespace Stratis.Bitcoin.Connection
     public class PeerBanning : IPeerBanning
     {
         /// <summary>A connection manager of peers.</summary>
-        private readonly IConnectionManager connectionManager;
+        private readonly IReadOnlyNetworkPeerCollection networkPeerCollection;
 
         /// <summary>Instance logger.</summary>
         private readonly ILogger logger;
@@ -94,10 +94,10 @@ namespace Stratis.Bitcoin.Connection
         /// <summary>Functionality of date and time.</summary>
         private readonly IDateTimeProvider dateTimeProvider;
 
-        public PeerBanning(IConnectionManager connectionManager, ILoggerFactory loggerFactory, IDateTimeProvider dateTimeProvider, NodeSettings nodeSettings)//, IBanStore banStore)
+        public PeerBanning(IReadOnlyNetworkPeerCollection networkPeerCollection, ILoggerFactory loggerFactory, IDateTimeProvider dateTimeProvider)
         {
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
-            this.connectionManager = connectionManager;
+            this.networkPeerCollection = networkPeerCollection;
             this.dateTimeProvider = dateTimeProvider;
 
             // TODO: MemoryBanStore should be replaced with the address manager store
@@ -113,7 +113,7 @@ namespace Stratis.Bitcoin.Connection
             reason = reason ?? "unknown";
 
             bool banPeer = true;
-            INetworkPeer peer = this.connectionManager.ConnectedPeers.FindByEndpoint(endpoint);
+            INetworkPeer peer = this.networkPeerCollection.FindByEndpoint(endpoint);
             if (peer != null)
             {
                 ConnectionManagerBehavior peerBehavior = peer.Behavior<ConnectionManagerBehavior>();
