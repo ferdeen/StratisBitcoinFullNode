@@ -57,6 +57,13 @@ namespace Stratis.Bitcoin.IntegrationTests
             PosNodeWalletHasEarnedCoinsThroughStaking();
         }
 
+        public long WalletTotalAmount()
+        {
+            return this.nodes[this.PosStaker].FullNode.WalletManager()
+                .GetSpendableTransactionsInWallet(this.PosWallet)
+                .Sum(utxo => utxo.Transaction.Amount);
+        }
+
         public CoreNode ProofOfStakeNodeWithCoins => this.nodes?[this.PosStaker];
 
         public CoreNode AddAndConnectProofOfStakeNodes(string nodeName)

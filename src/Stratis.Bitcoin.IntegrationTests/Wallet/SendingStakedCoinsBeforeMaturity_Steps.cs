@@ -16,7 +16,6 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 {
     public partial class SendingStakedCoinsBeforeMaturity : BddSpecification
     {
-        private SharedSteps sharedSteps;
         private ProofOfStakeSteps proofOfStakeSteps;
         private NodeGroupBuilder nodeGroupBuilder;
 
@@ -29,16 +28,10 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
         private const decimal OneMillion = 1_000_000;
 
-        ITestOutputHelper outputHelper;
-
-        public SendingStakedCoinsBeforeMaturity(ITestOutputHelper outputHelper) : base(outputHelper)
-        {
-            this.outputHelper = outputHelper;
-        }
+        public SendingStakedCoinsBeforeMaturity(ITestOutputHelper outputHelper) : base(outputHelper) { }
 
         protected override void BeforeTest()
         {
-            this.sharedSteps = new SharedSteps();
             this.proofOfStakeSteps = new ProofOfStakeSteps(this.CurrentTest.DisplayName);
             this.nodeGroupBuilder = new NodeGroupBuilder(this.CurrentTest.DisplayName);
         }
@@ -51,20 +44,15 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
         private void two_nodes_which_includes_a_proof_of_stake_wallet_with_over_a_million_coins()
         {
             this.proofOfStakeSteps.GenerateCoins();
-
-            this.proofOfStakeSteps.ProofOfStakeNodeWithCoins.FullNode.WalletManager()
-                .GetSpendableTransactionsInWallet(this.proofOfStakeSteps.PosWallet)
-                .Sum(utxo => utxo.Transaction.Amount)
-                .Should().BeGreaterThan(Money.Coins(OneMillion));
+            this.proofOfStakeSteps.WalletTotalAmount().Should().BeGreaterThan(Money.Coins(OneMillion));
         }
 
         private void a_wallet_sends_coins_before_maturity()
         {
-            GetWalletHistory(this.proofOfStakeSteps.ProofOfStakeNodeWithCoins, this.proofOfStakeSteps.PosWallet)
+            (this.proofOfStakeSteps.ProofOfStakeNodeWithCoins.GetWalletHistory(this.proofOfStakeSteps.PosWallet)
                 .AccountsHistoryModel
                 .FirstOrDefault()
-                .TransactionsHistory
-                .Where(txn => txn.Type == TransactionItemType.Send).Count().Should().Be(0);
+                ?.TransactionsHistory).Count(txn => txn.Type == TransactionItemType.Send).Should().Be(0);
 
             var transactionResult = this.proofOfStakeSteps.ProofOfStakeNodeWithCoins.FullNode.NodeService<WalletController>()
                 .BuildTransaction(new BuildTransactionRequest
@@ -97,11 +85,10 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
         private void the_wallet_history_does_not_include_the_transaction()
         {
-            GetWalletHistory(this.proofOfStakeSteps.ProofOfStakeNodeWithCoins, this.proofOfStakeSteps.PosWallet)
+            (this.proofOfStakeSteps.ProofOfStakeNodeWithCoins.GetWalletHistory(this.proofOfStakeSteps.PosWallet)
                 .AccountsHistoryModel
                 .FirstOrDefault()
-                .TransactionsHistory
-                .Where(txn => txn.Type == TransactionItemType.Send).Count().Should().Be(0);
+                ?.TransactionsHistory).Count(txn => txn.Type == TransactionItemType.Send).Should().Be(0);
         }
 
         private void the_transaction_was_not_recieved()
@@ -109,14 +96,6 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             this.ReceiverNode.FullNode.WalletManager().GetSpendableTransactionsInWallet(WalletName)
                 .Sum(utxo => utxo.Transaction.Amount)
                 .Should().Be(0);
-        }
-
-        private WalletHistoryModel GetWalletHistory(CoreNode node, string walletName)
-        {
-            var walletHistory = node.FullNode.NodeService<WalletController>()
-                .GetHistory(new WalletHistoryRequest { WalletName = walletName }) as JsonResult;
-
-            return walletHistory?.Value as WalletHistoryModel;
         }
 
         private string GetReceiverUnusedAddressFromWallet()

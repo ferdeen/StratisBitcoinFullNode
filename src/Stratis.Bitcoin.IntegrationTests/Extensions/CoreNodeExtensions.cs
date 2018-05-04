@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using NBitcoin;
 using Stratis.Bitcoin.Features.Consensus;
 using Stratis.Bitcoin.Features.Consensus.Interfaces;
 using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.Features.Wallet.Controllers;
+using Stratis.Bitcoin.Features.Wallet.Models;
 using Stratis.Bitcoin.IntegrationTests.EnvironmentMockUpHelpers;
 
 namespace Stratis.Bitcoin.IntegrationTests
@@ -39,6 +42,14 @@ namespace Stratis.Bitcoin.IntegrationTests
         public static Money GetFee(this CoreNode node, TransactionBuildContext transactionBuildContext)
         {
             return node.FullNode.WalletTransactionHandler().EstimateFee(transactionBuildContext);
+        }
+
+        public static WalletHistoryModel GetWalletHistory(this CoreNode node, string walletName)
+        {
+            var walletHistory = node.FullNode.NodeService<WalletController>()
+                .GetHistory(new WalletHistoryRequest { WalletName = walletName }) as JsonResult;
+
+            return walletHistory?.Value as WalletHistoryModel;
         }
     }
 }

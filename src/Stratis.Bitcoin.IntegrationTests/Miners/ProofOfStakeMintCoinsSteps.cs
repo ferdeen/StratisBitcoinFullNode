@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using FluentAssertions;
 using NBitcoin;
-using Stratis.Bitcoin.IntegrationTests.Builders;
-using Stratis.Bitcoin.IntegrationTests.EnvironmentMockUpHelpers;
+using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.Features.Wallet.Controllers;
+using Stratis.Bitcoin.Features.Wallet.Models;
 using Xunit.Abstractions;
 
 namespace Stratis.Bitcoin.IntegrationTests.Miners
@@ -26,6 +29,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Miners
         private const string PosWalletPassword = "password";
 
         private const string WalletAccount = "account 0";
+
+        private const string NodeReceiver = "nodereceiver";
 
         private bool initialBlockSignature;
         private bool initialTimeStamp;
@@ -106,7 +111,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Miners
 
         private void it_creates_a_transaction_to_spend()
         {
-            this.powSenderAddress = this.nodes[PowMiner].FullNode.WalletManager()
+            this.powSenderAddress = this.nodes[NodeReceiver].FullNode.WalletManager()
                 .GetUnusedAddress(new WalletAccountReference(PowWallet, WalletAccount));
 
             this.transactionBuildContext = SharedSteps.CreateTransactionBuildContext(
@@ -124,7 +129,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Miners
         {
             try
             {
-                this.lastTransaction = this.nodes[PosStaker].FullNode.WalletTransactionHandler()
+                this.lastTransaction = this.nodes[nodere].FullNode.WalletTransactionHandler()
                     .BuildTransaction(SharedSteps.CreateTransactionBuildContext(
                         PosWallet, 
                         WalletAccount, 

@@ -13,21 +13,29 @@ namespace Stratis.Bitcoin.IntegrationTests.BlockStore
 {
     public partial class ProofOfStakeSpendingSpecification
     {
+        private ProofOfStakeSteps proofOfStakeSteps;
+        private SharedSteps sharedSteps;
+
+        private const decimal OneMillion = 1_000_000;
+
         private const string SendingWalletName = "sending wallet";
         private const string ReceivingWalletName = "receiving wallet";
         private const string WalletPassword = "123456";
         private const string AccountName = "account 0";
+
         private NodeBuilder nodeBuilder;
         private CoreNode sendingStratisBitcoinNode;
         private CoreNode receivingStratisBitcoinNode;
         private int coinbaseMaturity;
         private Exception caughtException;
         private Transaction lastTransaction;
+
         private int totalMinedBlocks;
 
-        private SharedSteps sharedSteps;
         private IDictionary<string, CoreNode> nodes;
         private NodeGroupBuilder nodeGroupBuilder;
+
+
 
         // NOTE: This constructor is allows test steps names to be logged
         public ProofOfStakeSpendingSpecification(ITestOutputHelper outputHelper) : base(outputHelper)
@@ -37,7 +45,7 @@ namespace Stratis.Bitcoin.IntegrationTests.BlockStore
         protected override void BeforeTest()
         {
             this.sharedSteps = new SharedSteps();
-            this.nodeGroupBuilder = new NodeGroupBuilder();
+            this.nodeGroupBuilder = new NodeGroupBuilder(this.CurrentTest.DisplayName);
         }
 
         protected override void AfterTest()
@@ -45,18 +53,10 @@ namespace Stratis.Bitcoin.IntegrationTests.BlockStore
             this.nodeBuilder.Dispose();
         }
 
-        private void a_sending_and_receiving_stratis_bitcoin_node_and_wallet()
+        private void two_nodes_which_includes_a_proof_of_stake_wallet_with_over_a_million_coins()
         {
-            this.nodes = this.nodeGroupBuilder
-                .StratisPosNode(SendingWalletName).Start().NotInIBD().WithWallet(SendingWalletName, WalletPassword)
-                .StratisPosNode(ReceivingWalletName).Start().NotInIBD().WithWallet(ReceivingWalletName, WalletPassword)
-                .WithConnections()
-                    .Connect(SendingWalletName, ReceivingWalletName)
-                    .AndNoMoreConnections()
-                .Build();            
-
-            this.coinbaseMaturity = (int)this.nodes[SendingWalletName].FullNode
-                .Network.Consensus.Option<PosConsensusOptions>().CoinbaseMaturity;
+            this.proofOfStakeSteps.GenerateCoins();
+            this.proofOfStakeSteps.WalletTotalAmount().Should().BeGreaterThan(Money.Coins(OneMillion));
         }
 
         private void a_block_is_mined_creating_spendable_coins()
