@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
 using NBitcoin;
 using Stratis.Bitcoin.Features.Consensus;
 using Stratis.Bitcoin.Features.Miner.Interfaces;
@@ -26,6 +27,8 @@ namespace Stratis.Bitcoin.IntegrationTests
         private HdAddress posReceiverAddress;
         private Key posReceiverPrivateKey;
 
+        private const decimal OneMillion = 1_000_000;
+
         public readonly string PowMiner = "ProofOfWorkNode";
         public readonly string PosStaker = "ProofOfStakeNode";
 
@@ -36,7 +39,7 @@ namespace Stratis.Bitcoin.IntegrationTests
         public readonly string PosWalletPassword = "password";
 
         public readonly string WalletAccount = "account 0";
-
+    
         public ProofOfStakeSteps(string displayName) 
         {
             this.sharedSteps = new SharedSteps();
@@ -66,11 +69,12 @@ namespace Stratis.Bitcoin.IntegrationTests
 
         public CoreNode ProofOfStakeNodeWithCoins => this.nodes?[this.PosStaker];
 
-        public CoreNode AddAndConnectProofOfStakeNodes(string nodeName)
+        public CoreNode AddAndConnectProofOfStakeNodes(string nodeName, string walletName, string walletPassword)
         {
             var newProofOfStakeNode = this.nodeGroupBuilder.CreateStratisPosNode(nodeName)
                 .Start()
                 .NotInIBD()
+                .WithWallet(walletName, walletPassword)
                 .Build();
 
             this.nodeGroupBuilder.WithConnections().Connect(this.PosStaker, nodeName);
@@ -185,6 +189,58 @@ namespace Stratis.Bitcoin.IntegrationTests
                 var staked = this.nodes[this.PosStaker].FullNode.WalletManager().GetSpendableTransactionsInWallet(this.PosWallet).Sum(s => s.Transaction.Amount);
                 return staked >= Money.COIN * 1000000;
             });
+        }
+
+        public IActionResult SendTransaction(IActionResult transactionResult)
+        {
+            var walletTransactionModel = (WalletBuildTransactionModel)(transactionResult as JsonResult)?.Value;
+
+            if (walletTransactionModel == null) return null;
+
+            return this.nodes[this.PosStaker].FullNode.NodeService<WalletController>()
+                .SendTransaction(new SendTransactionRequest(walletTransactionModel.Hex));
+        }
+
+        public IActionResult BuildTransaction(string nodeName, string walletName, string walletAccount, string walletPassword)
+        {
+            var recevierNode = this.CreateReceiverNode(nodeName, walletName, walletPassword);
+
+            var transactionResult = this.nodes[this.PosStaker].FullNode.NodeService<WalletController>()
+                .BuildTransaction(new BuildTransactionRequest
+                {
+                    AccountName = this.WalletAccount,
+                    AllowUnconfirmed = true,
+                    Amount = Money.Coins(OneMillion + 40).ToString(),
+                    DestinationAddress = this.GetReceiverUnusedAddressFromWallet(
+                        recevierNode,
+                        walletName,
+                        walletAccount,
+                        walletPassword),
+                    FeeType = FeeType.Medium.ToString("D"),
+                    Password = this.PosWalletPassword,
+                    WalletName = this.PosWallet,
+                    FeeAmount = Money.Satoshis(20000).ToString()
+                });
+
+            return transactionResult;
+        }
+
+        public string GetReceiverUnusedAddressFromWallet(CoreNode node, string walletName, string walletAccount, string walletPassword)
+        {            
+            node.FullNode.WalletManager().CreateWallet(walletPassword, walletName);
+
+            return node.FullNode.WalletManager().GetUnusedAddress(
+                new WalletAccountReference(walletName, walletAccount)).Address;
+        }
+
+        public CoreNode GetNode(string nodeName)
+        {
+            return this.nodes[nodeName];
+        }
+
+        public CoreNode CreateReceiverNode(string nodeName, string walletName, string walletPassword)
+        {
+            return this.AddAndConnectProofOfStakeNodes(nodeName, walletName, walletPassword);
         }
     }
 }
