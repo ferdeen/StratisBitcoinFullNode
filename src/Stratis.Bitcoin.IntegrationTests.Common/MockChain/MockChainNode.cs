@@ -23,10 +23,10 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
     /// </summary>
     public class MockChainNode
     {
-        private const string WalletName = "mywallet";
-        private const string Password = "123456";
-        private const string Passphrase = "passphrase";
-        private const string AccountName = "account 0";
+        public readonly string WalletName = "mywallet";
+        public readonly string Password = "123456";
+        public readonly string Passphrase = "passphrase";
+        public readonly string AccountName = "account 0";
 
         /// <summary>
         /// Chain this node is part of.
@@ -42,7 +42,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
         /// <summary>
         /// Reference to the complex underlying node object.
         /// </summary>
-        internal CoreNode CoreNode { get; }
+        public CoreNode CoreNode { get; }
 
         /// <summary>
         /// The address that all new coins are mined to.
@@ -56,7 +56,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
         {
             get
             {
-                return this.CoreNode.FullNode.WalletManager().GetSpendableTransactionsInWallet(WalletName);
+                return this.CoreNode.FullNode.WalletManager().GetSpendableTransactionsInWallet(this.WalletName);
             }
         }
 
@@ -86,7 +86,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
             // Set up address and mining
             this.CoreNode.NotInIBD();
             this.CoreNode.FullNode.WalletManager().CreateWallet(Password, WalletName, Passphrase);
-            this.MinerAddress = this.CoreNode.FullNode.WalletManager().GetUnusedAddress(new WalletAccountReference(WalletName, AccountName));
+            this.MinerAddress = this.CoreNode.FullNode.WalletManager().GetUnusedAddress(new WalletAccountReference(this.WalletName, this.AccountName));
             Wallet wallet = this.CoreNode.FullNode.WalletManager().GetWalletByName(WalletName);
             Key key = wallet.GetExtendedPrivateKeyForAddress(Password, this.MinerAddress).PrivateKey;
             this.CoreNode.SetDummyMinerSecret(new BitcoinSecret(key, this.CoreNode.FullNode.Network));
@@ -98,20 +98,11 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
         }
 
         /// <summary>
-        /// Mine the given number of blocks. The block reward will go to this node's MinerAddress.
-        /// </summary>
-        public void MineBlocks(int num)
-        {
-            this.CoreNode.GenerateStratisWithMiner(num);
-            this.chain.WaitForAllNodesToSync();
-        }
-
-        /// <summary>
         /// Get an unused address that can be used to send funds to this node.
         /// </summary>
         public HdAddress GetUnusedAddress()
         {
-            return this.CoreNode.FullNode.WalletManager().GetUnusedAddress(new WalletAccountReference(WalletName, AccountName));
+            return this.CoreNode.FullNode.WalletManager().GetUnusedAddress(new WalletAccountReference(this.WalletName, this.AccountName));
         }
 
         /// <summary>
@@ -121,7 +112,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
         {
             var txBuildContext = new TransactionBuildContext(this.chain.Network)
             {
-                AccountReference = new WalletAccountReference(WalletName, AccountName),
+                AccountReference = new WalletAccountReference(this.WalletName, this.AccountName),
                 MinConfirmations = 1,
                 FeeType = FeeType.Medium,
                 WalletPassword = Password,
@@ -150,13 +141,13 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
             var request = new BuildCreateContractTransactionRequest
             {
                 Amount = amount.ToString(),
-                AccountName = AccountName,
+                AccountName = this.AccountName,
                 ContractCode = contractCode.ToHexString(),
                 FeeAmount = feeAmount.ToString(),
                 GasLimit = gasLimit.ToString(),
                 GasPrice = gasPrice.ToString(),
                 Parameters = parameters,
-                Password = Password,
+                Password = this.Password,
                 Sender = this.MinerAddress.Address,
                 WalletName = WalletName
             };
@@ -188,7 +179,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
         {
             var request = new BuildCallContractTransactionRequest
             {
-                AccountName = AccountName,
+                AccountName = this.AccountName,
                 Amount = amount.ToString(),
                 ContractAddress = contractAddress,
                 FeeAmount = feeAmount.ToString(),
@@ -196,7 +187,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
                 GasPrice = gasPrice.ToString(),
                 MethodName = methodName,
                 Parameters = parameters,
-                Password = Password,
+                Password = this.Password,
                 Sender = this.MinerAddress.Address,
                 WalletName = WalletName
             };

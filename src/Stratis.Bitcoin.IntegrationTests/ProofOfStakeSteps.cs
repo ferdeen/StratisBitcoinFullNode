@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using FluentAssertions;
 using NBitcoin;
 using Stratis.Bitcoin.Features.Miner.Interfaces;
 using Stratis.Bitcoin.Features.Miner.Staking;
@@ -58,13 +58,21 @@ namespace Stratis.Bitcoin.IntegrationTests
 
         public void MineGenesisAndPremineBlocks()
         {
-            this.sharedSteps.MinePremineBlocks(this.nodes[this.PremineNode], this.PremineWallet, this.PremineWalletAccount, this.PremineWalletPassword);
+            var addressUsed = TestHelper.MineBlocks(this.nodes[this.PremineNode], this.PremineWallet, this.PremineWalletPassword, this.PremineWalletAccount, 2);
+
+            // Since the premine will not be immediately spendable, the transactions have to be counted directly from the address.
+            addressUsed.Transactions.Count().Should().Be(2);
+
+            Money amountShouldBe = this.nodes[this.PremineNode].FullNode.Network.Consensus.PremineReward 
+                + this.nodes[this.PremineNode].FullNode.Network.Consensus.ProofOfWorkReward;
+
+            addressUsed.Transactions.Sum(s => s.Amount).Should().Be(amountShouldBe);
         }
 
         public void MineCoinsToMaturity()
         {
             this.nodes[this.PremineNode].GenerateStratisWithMiner(Convert.ToInt32(this.nodes[this.PremineNode].FullNode.Network.Consensus.CoinbaseMaturity));
-            this.sharedSteps.WaitForNodeToSync(this.nodes[this.PremineNode]);
+            TestHelper.WaitForNodeToSync(this.nodes[this.PremineNode]);
         }
 
         public void PremineNodeMinesTenBlocksMoreEnsuringTheyCanBeStaked()

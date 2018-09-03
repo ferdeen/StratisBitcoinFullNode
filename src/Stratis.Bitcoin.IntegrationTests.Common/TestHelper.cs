@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
+using NBitcoin;
 using Stratis.Bitcoin.Base;
+using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.P2P.Peer;
+using Stratis.Bitcoin.Utilities;
 using Xunit;
+using static Stratis.Bitcoin.BlockPulling.BlockPuller;
 
 namespace Stratis.Bitcoin.IntegrationTests.Common
 {
@@ -63,6 +67,130 @@ namespace Stratis.Bitcoin.IntegrationTests.Common
         public static bool IsNodeConnected(CoreNode node)
         {
             return node.FullNode.ConnectionManager.ConnectedPeers.Any(p => p.IsConnected);
+        }
+
+        public static void WaitForNodeToSync(params CoreNode[] nodes)
+        {
+            nodes.ToList().ForEach(n => WaitLoop(() => IsNodeSynced(n)));
+            nodes.Skip(1).ToList().ForEach(n => WaitLoop(() => AreNodesSynced(nodes.First(), n)));
+        }
+
+        public static HdAddress MineBlocks(CoreNode node, string walletName, string walletPassword, string accountName, uint numberOfBlocks)
+        {
+            Guard.NotNull(node, nameof(node));
+            Guard.NotEmpty(walletName, nameof(walletName));
+            Guard.NotEmpty(walletPassword, nameof(walletPassword));
+            Guard.NotEmpty(accountName, nameof(accountName));
+
+            if (numberOfBlocks == 0) throw new ArgumentOutOfRangeException(nameof(numberOfBlocks), "Number of blocks must be greater than zero.");
+            
+            WaitForNodeToSync(node);
+
+            HdAddress address = node.FullNode.WalletManager().GetUnusedAddress(new WalletAccountReference(walletName, accountName));
+
+            Wallet wallet = node.FullNode.WalletManager().GetWalletByName(walletName);
+            Key extendedPrivateKey = wallet.GetExtendedPrivateKeyForAddress(walletPassword, address).PrivateKey;
+
+            node.SetDummyMinerSecret(new BitcoinSecret(extendedPrivateKey, node.FullNode.Network));
+
+            node.GenerateStratisWithMiner((int)numberOfBlocks);
+
+            WaitForNodeToSync(node);
+
+            return address;
+        }
+
+        /// <summary>
+        /// This should only be used if we need to create a block manually, in all other cases please use
+        /// <see cref="TestHelper.MineBlocks"/>
+        /// </summary>
+        /// <param name="coreNode">The node we want to create the block with.</param>
+        /// <param name="transactions">Transactions we want to manually include in the block.</param>
+        /// <returns>A <see cref="Block"/> with input transactions.</returns>
+        public static Block GenerateBlockManually(CoreNode coreNode, List<Transaction> transactions)
+        {
+            uint nonce = 0;
+
+            var block = coreNode.FullNode.Network.CreateBlock();
+            block.Header.HashPrevBlock = coreNode.FullNode.Chain.Tip.HashBlock;
+            block.Header.Bits = block.Header.GetWorkRequired(coreNode.FullNode.Network, coreNode.FullNode.Chain.Tip);
+            block.Header.UpdateTime(DateTimeOffset.UtcNow, coreNode.FullNode.Network, coreNode.FullNode.Chain.Tip);
+
+            var coinbase = coreNode.FullNode.Network.CreateTransaction();
+            coinbase.AddInput(TxIn.CreateCoinbase(coreNode.FullNode.Chain.Height + 1));
+            coinbase.AddOutput(new TxOut(coreNode.FullNode.Network.GetReward(coreNode.FullNode.Chain.Height + 1), coreNode.MinerSecret.GetAddress()));
+            block.AddTransaction(coinbase);
+
+            if (transactions.Any())
+            {
+                transactions = Reorder(transactions);
+                block.Transactions.AddRange(transactions);
+            }
+
+            block.UpdateMerkleRoot();
+
+            while (!block.CheckProofOfWork())
+                block.Header.Nonce = ++nonce;
+
+            uint256 blockHash = block.GetHash();
+            var chainedHeader = new ChainedHeader(block.Header, blockHash, coreNode.FullNode.Chain.Tip);
+            ChainedHeader oldTip = coreNode.FullNode.Chain.SetTip(chainedHeader);
+            coreNode.FullNode.ConsensusLoop().Puller.InjectBlock(blockHash, new DownloadedBlock { Length = block.GetSerializedSize(), Block = block }, CancellationToken.None);
+
+            return block;
+        }
+
+        public static List<Transaction> Reorder(List<Transaction> transactions)
+        {
+            if (transactions.Count == 0)
+                return transactions;
+
+            var result = new List<Transaction>();
+            Dictionary<uint256, TransactionNode> dictionary = transactions.ToDictionary(t => t.GetHash(), t => new TransactionNode(t));
+            foreach (TransactionNode transaction in dictionary.Select(d => d.Value))
+            {
+                foreach (TxIn input in transaction.Transaction.Inputs)
+                {
+                    TransactionNode node = dictionary.TryGet(input.PrevOut.Hash);
+                    if (node != null)
+                    {
+                        transaction.DependsOn.Add(node);
+                    }
+                }
+            }
+
+            while (dictionary.Count != 0)
+            {
+                foreach (TransactionNode node in dictionary.Select(d => d.Value).ToList())
+                {
+                    foreach (TransactionNode parent in node.DependsOn.ToList())
+                    {
+                        if (!dictionary.ContainsKey(parent.Hash))
+                            node.DependsOn.Remove(parent);
+                    }
+
+                    if (node.DependsOn.Count == 0)
+                    {
+                        result.Add(node.Transaction);
+                        dictionary.Remove(node.Hash);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private class TransactionNode
+        {
+            public uint256 Hash = null;
+            public Transaction Transaction = null;
+            public List<TransactionNode> DependsOn = new List<TransactionNode>();
+
+            public TransactionNode(Transaction tx)
+            {
+                this.Transaction = tx;
+                this.Hash = tx.GetHash();
+            }
         }
     }
 }

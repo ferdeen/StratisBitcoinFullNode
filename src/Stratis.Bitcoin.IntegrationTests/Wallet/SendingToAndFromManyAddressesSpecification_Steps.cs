@@ -88,7 +88,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
         private void Mine100Coins(CoreNode node)
         {
-            this.sharedSteps.MineBlocks(this.CoinBaseMaturity + 2, node, WalletAccountName, WalletName, WalletPassword);
+            TestHelper.MineBlocks(node, WalletName, WalletPassword, WalletAccountName, (uint)this.CoinBaseMaturity + 2);
         }
 
         private void node2_receives_the_funds()
@@ -103,7 +103,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
             this.nodes[NodeTwo].WalletSpendableTransactionCount(WalletName).Should().Be(UnspentTransactionOutputs);
 
-            this.sharedSteps.MineBlocks(1, this.nodes[NodeTwo], WalletAccountName, WalletName, WalletPassword);
+            TestHelper.MineBlocks(this.nodes[NodeTwo], WalletName, WalletPassword, WalletAccountName, 1);
 
             this.nodes[NodeTwo].WalletHeight(WalletName).Should().Be(this.CoinBaseMaturity + 3);
         }
@@ -132,7 +132,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
         {
             Money nodeOneBeforeBalance = this.nodes[NodeOne].WalletBalance(WalletName);
 
-            this.sharedSteps.MineBlocks(1, this.nodes[NodeTwo], WalletAccountName, WalletName, WalletPassword);
+            TestHelper.MineBlocks(this.nodes[NodeTwo], WalletName, WalletPassword, WalletAccountName, 1);
 
             this.nodes[NodeOne].WalletBalance(WalletName).Should().Be(nodeOneBeforeBalance + Money.Coins(49));
 

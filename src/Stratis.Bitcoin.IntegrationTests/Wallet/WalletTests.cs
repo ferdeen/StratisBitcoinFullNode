@@ -77,8 +77,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
                 Assert.Null(stratisReceiver.FullNode.WalletManager().GetSpendableTransactionsInWallet("mywallet").First().Transaction.BlockHeight);
 
                 // Generate two new blocks so the transaction is confirmed
-                stratisSender.GenerateBlockManually(new List<Transaction>(new[] {
-                    stratisSender.FullNode.Network.CreateTransaction(trx.ToBytes()) }));
+                TestHelper.GenerateBlockManually(stratisSender, new List<Transaction>(new[] { stratisSender.FullNode.Network.CreateTransaction(trx.ToBytes()) }));
+
                 stratisSender.GenerateStratisWithMiner(1);
 
                 // Wait for block repo for block sync to work

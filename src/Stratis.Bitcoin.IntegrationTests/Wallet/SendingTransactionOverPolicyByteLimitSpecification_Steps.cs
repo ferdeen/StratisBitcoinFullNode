@@ -94,7 +94,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
         {
             this.CoinBaseMaturity = (int)this.nodes[NodeOne].FullNode.Network.Consensus.CoinbaseMaturity;
 
-            this.MineBlocks(this.nodes[NodeOne]);
+            TestHelper.MineBlocks(this.nodes[NodeOne], WalletName, WalletPassword, WalletAccountName, (uint)this.CoinBaseMaturity * 2);
 
             var nodeTwoAddresses = this.nodes[NodeTwo].FullNode.WalletManager().GetUnusedAddresses(new WalletAccountReference(WalletName, WalletAccountName), txoutputs);
 
@@ -125,11 +125,6 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
         private void node1_wallet_throws_no_exceptions()
         {
             this.caughtException.Should().BeNull();
-        }
-
-        private void MineBlocks(CoreNode node)
-        {
-            this.sharedSteps.MineBlocks(this.CoinBaseMaturity * 2, node, WalletAccountName, WalletName, WalletPassword);
         }
     }
 }

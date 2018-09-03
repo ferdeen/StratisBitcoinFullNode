@@ -303,6 +303,7 @@ namespace Stratis.Bitcoin.IntegrationTests
             const string walletName = "dummyWallet";
             const string walletPassword = "dummyPassword";
             const string walletPassphrase = "dummyPassphrase";
+            const string accountName = "account 0";
 
             var sharedSteps = new SharedSteps();
             string testFolderPath = Path.Combine(this.GetType().Name, nameof(MiningNodeWithOneConnectionAlwaysSynced));
@@ -318,10 +319,10 @@ namespace Stratis.Bitcoin.IntegrationTests
                     .Connect(node1, node2)
                     .AndNoMoreConnections().Build();
 
-                nodes.Values.ToList().ForEach(n =>
+                nodes.Values.ToList().ForEach(node =>
                     {
-                        sharedSteps.MineBlocks(1, n, "account 0", walletName, walletPassword);
-                        sharedSteps.WaitForNodeToSync(nodes.Values.ToArray());
+                        TestHelper.MineBlocks(node, walletName, walletPassword, accountName, 1);
+                        TestHelper.WaitForNodeToSync(nodes.Values.ToArray());
                     });
 
                 int networkHeight = nodes[miner].FullNode.Chain.Height;
@@ -352,7 +353,7 @@ namespace Stratis.Bitcoin.IntegrationTests
                 nodes[connector].GenerateStratisWithMiner(1);
                 networkHeight++;
 
-                sharedSteps.WaitForNodeToSync(nodes.Values.ToArray());
+                TestHelper.WaitForNodeToSync(nodes.Values.ToArray());
 
                 nodes.Values.All(n => n.FullNode.Chain.Height == networkHeight).Should()
                     .BeTrue(because:"all nodes have synced to chain height");
