@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using NBitcoin;
 using NBitcoin.DataEncoders;
+using NBitcoin.Protocol;
 using Newtonsoft.Json.Linq;
 
 namespace Stratis.Bitcoin.Features.RPC
@@ -221,7 +222,7 @@ namespace Stratis.Bitcoin.Features.RPC
                 return tx.ToHex();
 
             // if there is, do this ACK so that NBitcoin does not change the version number
-            return Encoders.Hex.EncodeData(tx.ToBytes(version: NBitcoin.Protocol.ProtocolVersion.WITNESS_VERSION - 1));
+            return Encoders.Hex.EncodeData(tx.ToBytes(version:(ProtocolVersion)(uint)Networks.ProtocolVersion.Witness.Id - 1));
         }
 
         // getreceivedbyaddress

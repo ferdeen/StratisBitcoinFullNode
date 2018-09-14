@@ -176,7 +176,7 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
             var model = new GetInfoModel
             {
                 Version = this.FullNode?.Version?.ToUint() ?? 0,
-                ProtocolVersion = (uint)(this.Settings?.ProtocolVersion ?? NodeSettings.SupportedProtocolVersion),
+                ProtocolVersion = this.Settings?.ProtocolVersion ?? Networks.ProtocolVersion.SendHeaders.Id,
                 Blocks = this.ChainState?.ConsensusTip?.Height ?? 0,
                 TimeOffset = this.ConnectionManager?.ConnectedPeers?.GetMedianTimeOffset() ?? 0,
                 Connections = this.ConnectionManager?.ConnectedPeers?.Count(),

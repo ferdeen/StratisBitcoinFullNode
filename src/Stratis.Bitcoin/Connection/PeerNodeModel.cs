@@ -104,7 +104,7 @@ namespace Stratis.Bitcoin.Connection
         /// The protocol version number used by this node.
         /// </summary>
         [JsonProperty(PropertyName = "version")]
-        public uint Version { get; internal set; }
+        public int Version { get; internal set; }
 
         /// <summary>
         /// The user agent this node sends in its version message.

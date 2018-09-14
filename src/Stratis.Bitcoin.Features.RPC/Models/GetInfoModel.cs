@@ -9,7 +9,7 @@ namespace Stratis.Bitcoin.Features.RPC.Models
         public uint Version { get; set; }
 
         [JsonProperty(Order = 1, PropertyName = "protocolversion")]
-        public uint ProtocolVersion { get; set; }
+        public int ProtocolVersion { get; set; }
 
         [JsonProperty(Order = 4, PropertyName = "blocks")]
         public int Blocks { get; set; }

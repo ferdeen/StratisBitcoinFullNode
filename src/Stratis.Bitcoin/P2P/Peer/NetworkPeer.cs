@@ -57,7 +57,7 @@ namespace Stratis.Bitcoin.P2P.Peer
     public class NetworkPeerRequirement
     {
         /// <summary>Minimal protocol version that the peer must support or <c>null</c> if there is no requirement for minimal protocol version.</summary>
-        public ProtocolVersion? MinVersion { get; set; }
+        public int MinVersion { get; set; }
 
         /// <summary>Specification of network services that the peer must provide.</summary>
         public NetworkPeerServices RequiredServices { get; set; }
@@ -72,9 +72,9 @@ namespace Stratis.Bitcoin.P2P.Peer
         /// <returns><c>true</c> if the version payload satisfies the protocol requirements, <c>false</c> otherwise.</returns>
         public virtual bool Check(VersionPayload version)
         {
-            if (this.MinVersion != null)
+            if (this.MinVersion > 0)
             {
-                if (version.Version < this.MinVersion.Value)
+                if (version.Version < this.MinVersion)
                     return false;
             }
 
@@ -85,10 +85,10 @@ namespace Stratis.Bitcoin.P2P.Peer
 
             if (this.SupportSPV)
             {
-                if (version.Version < ProtocolVersion.MEMPOOL_GD_VERSION)
+                if (version.Version < Networks.ProtocolVersion.MempoolGetData.Id)
                     return false;
 
-                if ((ProtocolVersion.NO_BLOOM_VERSION <= version.Version) && ((version.Services & NetworkPeerServices.NODE_BLOOM) == 0))
+                if ((Networks.ProtocolVersion.NoBloom.Id <= version.Version) && ((version.Services & NetworkPeerServices.NODE_BLOOM) == 0))
                     return false;
             }
 
@@ -183,14 +183,14 @@ namespace Stratis.Bitcoin.P2P.Peer
         }
 
         /// <inheritdoc/>
-        public ProtocolVersion Version
+        public int Version
         {
             get
             {
-                ProtocolVersion peerVersion = this.PeerVersion == null ? this.MyVersion.Version : this.PeerVersion.Version;
-                ProtocolVersion myVersion = this.MyVersion.Version;
-                uint min = Math.Min((uint)peerVersion, (uint)myVersion);
-                return (ProtocolVersion)min;
+                int peerVersion = this.PeerVersion == null ? this.MyVersion.Version : this.PeerVersion.Version;
+                int myVersion = this.MyVersion.Version;
+                int min = Math.Min(peerVersion, myVersion);
+                return min;
             }
         }
 
@@ -558,7 +558,7 @@ namespace Stratis.Bitcoin.P2P.Peer
                     break;
 
                 case NetworkPeerState.HandShaked:
-                    if (this.Version >= ProtocolVersion.REJECT_VERSION)
+                    if (this.Version >= Networks.ProtocolVersion.Reject.Id)
                     {
                         var rejectPayload = new RejectPayload()
                         {
@@ -716,7 +716,7 @@ namespace Stratis.Bitcoin.P2P.Peer
                                 this.logger.LogDebug("Different external address detected by the node '{0}' instead of '{1}'.", versionPayload.AddressReceiver.Address, this.MyVersion.AddressFrom.Address);
                             }
 
-                            if (versionPayload.Version < ProtocolVersion.MIN_PEER_PROTO_VERSION)
+                            if (versionPayload.Version < Networks.ProtocolVersion.MinPeers.Id)
                             {
                                 this.logger.LogDebug("Outdated version {0} received, disconnecting peer.", versionPayload.Version);
 

@@ -98,7 +98,7 @@ namespace Stratis.Bitcoin.P2P.Protocol
             length = payloadBytes == null ? 0 : length;
             stream.ReadWrite(ref length);
 
-            if (stream.ProtocolVersion >= ProtocolVersion.MEMPOOL_GD_VERSION)
+            if (stream.ProtocolVersion >= (ProtocolVersion)Networks.ProtocolVersion.MempoolGetData.Id)
             {
                 if (stream.Serializing)
                     checksum = Hashes.Hash256(payloadBytes, 0, length).GetLow32();
@@ -176,11 +176,11 @@ namespace Stratis.Bitcoin.P2P.Protocol
             return string.Format("{0}: {1}", this.Command, this.Payload);
         }
 
-        public static Message ReadNext(Stream stream, Network network, ProtocolVersion version, CancellationToken cancellationToken, PayloadProvider payloadProvider, out PerformanceCounter counter)
+        public static Message ReadNext(Stream stream, Network network, int version, CancellationToken cancellationToken, PayloadProvider payloadProvider, out PerformanceCounter counter)
         {
             var bitStream = new BitcoinStream(stream, false)
             {
-                ProtocolVersion = version,
+                ProtocolVersion = (ProtocolVersion)version,
                 ReadCancellationToken = cancellationToken,
                 ConsensusFactory = network.Consensus.ConsensusFactory,
             };

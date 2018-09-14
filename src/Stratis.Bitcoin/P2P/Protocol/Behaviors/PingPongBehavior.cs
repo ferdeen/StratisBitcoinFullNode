@@ -108,7 +108,7 @@ namespace Stratis.Bitcoin.P2P.Protocol.Behaviors
         private bool PingVersion()
         {
             INetworkPeer peer = this.AttachedPeer;
-            return (peer != null) && (peer.Version > NBitcoin.Protocol.ProtocolVersion.BIP0031_VERSION);
+            return (peer != null) && (peer.Version > Networks.ProtocolVersion.Bip31.Id);
         }
 
         private Task OnStateChangedAsync(INetworkPeer peer, NetworkPeerState oldState)

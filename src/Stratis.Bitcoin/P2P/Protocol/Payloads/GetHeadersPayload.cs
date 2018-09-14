@@ -9,18 +9,18 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
     [Payload("getheaders")]
     public class GetHeadersPayload : Payload
     {
-        private uint version = (uint)ProtocolVersion.PROTOCOL_VERSION;
+        private int version;
 
-        public ProtocolVersion Version
+        public int Version
         {
             get
             {
-                return (ProtocolVersion)this.version;
+                return this.version;
             }
 
             set
             {
-                this.version = (uint)value;
+                this.version = value;
             }
         }
 
@@ -56,6 +56,7 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
 
         public GetHeadersPayload()
         {
+            this.version = Networks.ProtocolVersion.Protocol.Id;
         }
 
         public GetHeadersPayload(BlockLocator locator)

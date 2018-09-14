@@ -30,7 +30,7 @@ namespace Stratis.StratisDnsD
         {
             try
             {
-                var nodeSettings = new NodeSettings(protocolVersion:ProtocolVersion.ALT_PROTOCOL_VERSION, args:args);
+                var nodeSettings = new NodeSettings(protocolVersion: Bitcoin.Networks.ProtocolVersion.AltProtocal.Id, args:args);
 
                 var dnsSettings = new DnsSettings(nodeSettings);
 

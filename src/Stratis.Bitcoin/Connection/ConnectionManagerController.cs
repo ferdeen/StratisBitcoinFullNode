@@ -114,7 +114,7 @@ namespace Stratis.Bitcoin.Connection
                     {
                         peerNode.LocalAddress = peer.MyVersion.AddressReceiver?.ToString();
                         peerNode.Services = ((ulong)peer.MyVersion.Services).ToString("X");
-                        peerNode.Version = (uint)peer.MyVersion.Version;
+                        peerNode.Version = peer.MyVersion.Version;
                         peerNode.SubVersion = peer.MyVersion.UserAgent;
                         peerNode.StartingHeight = peer.MyVersion.StartHeight;
                     }

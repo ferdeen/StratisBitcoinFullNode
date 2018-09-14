@@ -11,9 +11,11 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Consensus
         {
         }
 
-        public SmartContractPosTransaction(string hex, ProtocolVersion version = ProtocolVersion.PROTOCOL_VERSION) : this()
+        public SmartContractPosTransaction(string hex, int version = 0) : this()
         {
-            this.FromBytes(Encoders.Hex.DecodeData(hex), version);
+            version = version == 0 ? Bitcoin.Networks.ProtocolVersion.Protocol.Id : version;
+
+            this.FromBytes(Encoders.Hex.DecodeData(hex), (ProtocolVersion)(uint)version);
         }
 
         public SmartContractPosTransaction(byte[] bytes) : this()

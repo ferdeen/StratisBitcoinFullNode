@@ -45,25 +45,25 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
 
         private static string userAgent;
 
-        private uint version;
+        private int version;
 
-        public ProtocolVersion Version
+        public int Version
         {
             get
             {
                 // A version number of 10300 is converted to 300 before being processed.
                 if (this.version == 10300)
-                    return (ProtocolVersion)(300);  // https://en.bitcoin.it/wiki/Version_Handshake
+                    return 300;  // https://en.bitcoin.it/wiki/Version_Handshake
 
-                return (ProtocolVersion)this.version;
+                return this.version;
             }
 
             set
             {
-                if (value == (ProtocolVersion)10300)
-                    value = (ProtocolVersion)300;
+                if (value == 10300)
+                    value = 300;
 
-                this.version = (uint)value;
+                this.version = value;
             }
         }
 
@@ -210,7 +210,7 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
                 stream.ReadWrite(ref this.timestamp);
 
                 // No time field in version message.
-                using (stream.ProtocolVersionScope(ProtocolVersion.CADDR_TIME_VERSION - 1))
+                using (stream.ProtocolVersionScope((ProtocolVersion)Networks.ProtocolVersion.CAddressTime.Id - 1))
                 {
                     stream.ReadWrite(ref this.addressReceiver);
                 }
@@ -218,7 +218,7 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
                 if (this.version >= 106)
                 {
                     // No time field in version message.
-                    using (stream.ProtocolVersionScope(ProtocolVersion.CADDR_TIME_VERSION - 1))
+                    using (stream.ProtocolVersionScope((ProtocolVersion)Networks.ProtocolVersion.CAddressTime.Id - 1))
                     {
                         stream.ReadWrite(ref this.addressFrom);
                     }

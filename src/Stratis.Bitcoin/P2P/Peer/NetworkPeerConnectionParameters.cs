@@ -15,7 +15,7 @@ namespace Stratis.Bitcoin.P2P.Peer
         /// <summary>Send addr unsollicited message of the AddressFrom peer when passing to Handshaked state.</summary>
         public bool Advertize { get; set; }
 
-        public ProtocolVersion Version { get; set; }
+        public int Version { get; set; }
 
         /// <summary>If true, the node will receive all incoming transactions if no bloomfilter are set.</summary>
         public bool IsRelay { get; set; }
@@ -40,7 +40,7 @@ namespace Stratis.Bitcoin.P2P.Peer
 
         public NetworkPeerConnectionParameters()
         {
-            this.Version = ProtocolVersion.PROTOCOL_VERSION;
+            this.Version = Networks.ProtocolVersion.Protocol.Id;
             this.IsRelay = true;
             this.Services = NetworkPeerServices.Nothing;
             this.ConnectCancellation = default(CancellationToken);

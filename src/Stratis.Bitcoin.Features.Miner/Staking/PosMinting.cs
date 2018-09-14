@@ -728,7 +728,7 @@ namespace Stratis.Bitcoin.Features.Miner.Staking
             }
 
             // Limit size.
-            int serializedSize = coinstakeContext.CoinstakeTx.GetSerializedSize(ProtocolVersion.ALT_PROTOCOL_VERSION, SerializationType.Network);
+            int serializedSize = coinstakeContext.CoinstakeTx.GetSerializedSize((ProtocolVersion)(uint)Networks.ProtocolVersion.AltProtocal.Id, SerializationType.Network);
             if (serializedSize >= (MaxBlockSizeGen / 5))
             {
                 this.logger.LogTrace("Coinstake size {0} bytes exceeded limit {1} bytes.", serializedSize, MaxBlockSizeGen / 5);
