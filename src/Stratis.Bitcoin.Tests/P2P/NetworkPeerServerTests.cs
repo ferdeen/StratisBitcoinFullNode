@@ -3,7 +3,6 @@ using System.Net;
 using System.Threading.Tasks;
 using Moq;
 using NBitcoin.Networks;
-using NBitcoin.Protocol;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Configuration.Settings;
@@ -51,7 +50,7 @@ namespace Stratis.Bitcoin.Tests.P2P
             var endpointAddNode = new IPEndPoint(IPAddress.Parse("::ffff:192.168.0.1"), 80);
 
             var networkPeerServer = new NetworkPeerServer(this.Network, 
-                endpointAddNode, endpointAddNode, ProtocolVersion.PROTOCOL_VERSION, this.extendedLoggerFactory, 
+                endpointAddNode, endpointAddNode, Networks.ProtocolVersion.Protocol.Id, this.extendedLoggerFactory, 
                 networkPeerFactory.Object, initialBlockDownloadState.Object, connectionManagerSettings);
 
             // Mimic external client

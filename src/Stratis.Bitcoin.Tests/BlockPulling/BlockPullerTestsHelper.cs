@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NBitcoin;
-using NBitcoin.Protocol;
 using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.BlockPulling;
 using Stratis.Bitcoin.Configuration;
@@ -71,7 +69,7 @@ namespace Stratis.Bitcoin.Tests.BlockPulling
             VersionPayload version = connectionParameters.CreateVersion(new IPEndPoint(1, 1), new IPEndPoint(1, 1), KnownNetworks.StratisMain, new DateTimeProvider().GetTimeOffset());
 
             if (notSupportedVersion)
-                version.Version = NBitcoin.Protocol.ProtocolVersion.NOBLKS_VERSION_START;
+                version.Version = Networks.ProtocolVersion.NoBlocksStart.Id;
             else
                 version.Services = NetworkPeerServices.Network;
 

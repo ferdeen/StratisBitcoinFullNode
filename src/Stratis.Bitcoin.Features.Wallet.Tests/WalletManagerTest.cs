@@ -7,7 +7,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NBitcoin;
-using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Consensus;
@@ -3238,7 +3237,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
 
         private WalletManager CreateWalletManager(DataFolder dataFolder, Network network, params string[] cmdLineArgs)
         {
-            var nodeSettings = new NodeSettings(KnownNetworks.RegTest, ProtocolVersion.PROTOCOL_VERSION, network.Name, cmdLineArgs);
+            var nodeSettings = new NodeSettings(KnownNetworks.RegTest, Networks.ProtocolVersion.Protocol.Id, network.Name, cmdLineArgs);
             var walletSettings = new WalletSettings(nodeSettings);
 
             return new WalletManager(this.LoggerFactory.Object, network, new ConcurrentChain(network),

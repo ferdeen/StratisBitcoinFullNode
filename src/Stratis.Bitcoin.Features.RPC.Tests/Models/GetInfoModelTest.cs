@@ -126,7 +126,7 @@ namespace Stratis.Bitcoin.Features.RPC.Tests.Models
 
             Assert.Equal(expectedSortedPropertyNames, actualSortedPropertyNames);
             Assert.Equal(1010000u, model.Version);
-            Assert.Equal(70012u, model.ProtocolVersion);
+            Assert.Equal(70012, model.ProtocolVersion);
             Assert.Equal(Money.Satoshis(2).ToUnit(MoneyUnit.BTC), model.Balance);
             Assert.Equal(460828, model.Blocks);
             Assert.Equal(0, model.TimeOffset);

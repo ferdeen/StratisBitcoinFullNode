@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using NBitcoin;
-using NBitcoin.Protocol;
 using Stratis.Bitcoin.Builder;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
@@ -13,16 +11,16 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.Runners
         private readonly string agent;
         private readonly Action<IFullNodeBuilder> callback;
         private readonly Network network;
-        private readonly ProtocolVersion protocolVersion;
+        private readonly int protocolVersion;
         private readonly NodeConfigParameters configParameters;
 
         public CustomNodeRunner(string dataDir, Action<IFullNodeBuilder> callback, Network network, 
-            ProtocolVersion protocolVersion = ProtocolVersion.PROTOCOL_VERSION, NodeConfigParameters configParameters = null, string agent = "Custom")
+            int protocolVersion = 0, NodeConfigParameters configParameters = null, string agent = "Custom")
             : base(dataDir)
         {
             this.callback = callback;
             this.network = network;
-            this.protocolVersion = protocolVersion;
+            this.protocolVersion = protocolVersion == 0 ? Networks.ProtocolVersion.Protocol.Id : protocolVersion;
             this.agent = agent;
             this.configParameters = configParameters ?? new NodeConfigParameters();
         }

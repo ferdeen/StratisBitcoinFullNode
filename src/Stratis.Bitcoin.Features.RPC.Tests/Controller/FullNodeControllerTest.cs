@@ -5,13 +5,11 @@ using System.Threading.Tasks;
 using Moq;
 using NBitcoin;
 using NBitcoin.DataEncoders;
-using NBitcoin.Protocol;
 using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Controllers.Models;
-using Stratis.Bitcoin.Features.Consensus.Interfaces;
 using Stratis.Bitcoin.Features.RPC.Controllers;
 using Stratis.Bitcoin.Features.RPC.Models;
 using Stratis.Bitcoin.Interfaces;
@@ -401,7 +399,7 @@ namespace Stratis.Bitcoin.Features.RPC.Tests.Controller
         [Fact]
         public void GetInfo_TestNet_ReturnsInfoModel()
         {
-            this.nodeSettings = new NodeSettings(protocolVersion: ProtocolVersion.NO_BLOOM_VERSION, args: new[] { "-minrelaytxfeerate=1000" });
+            this.nodeSettings = new NodeSettings(protocolVersion: Networks.ProtocolVersion.NoBloom.Id, args: new[] { "-minrelaytxfeerate=1000" });
             this.controller = new FullNodeController(this.LoggerFactory.Object, this.pooledTransaction.Object, this.pooledGetUnspentTransaction.Object, this.getUnspentTransaction.Object, this.networkDifficulty.Object,
                 this.fullNode.Object, this.nodeSettings, this.network, this.chain, this.chainState.Object, this.connectionManager.Object);
 
@@ -419,7 +417,7 @@ namespace Stratis.Bitcoin.Features.RPC.Tests.Controller
             GetInfoModel model = this.controller.GetInfo();
 
             Assert.Equal((uint)14999899, model.Version);
-            Assert.Equal((uint)ProtocolVersion.NO_BLOOM_VERSION, model.ProtocolVersion);
+            Assert.Equal(Networks.ProtocolVersion.NoBloom.Id, model.ProtocolVersion);
             Assert.Equal(3, model.Blocks);
             Assert.Equal(0, model.TimeOffset);
             Assert.Equal(0, model.Connections);
@@ -482,7 +480,7 @@ namespace Stratis.Bitcoin.Features.RPC.Tests.Controller
                 this.fullNode.Object, this.nodeSettings, this.network, this.chain, this.chainState.Object, this.connectionManager.Object);
             GetInfoModel model = this.controller.GetInfo();
 
-            Assert.Equal((uint)NodeSettings.SupportedProtocolVersion, model.ProtocolVersion);
+            Assert.Equal(this.nodeSettings.SupportedProtocolVersion, model.ProtocolVersion);
             Assert.Equal(0, model.RelayFee);
         }
 

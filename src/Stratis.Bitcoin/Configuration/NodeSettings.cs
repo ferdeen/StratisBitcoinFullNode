@@ -7,7 +7,6 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NBitcoin.Networks;
-using NBitcoin.Protocol;
 using NLog.Extensions.Logging;
 using Stratis.Bitcoin.Builder.Feature;
 using Stratis.Bitcoin.Configuration.Logging;
@@ -35,7 +34,7 @@ namespace Stratis.Bitcoin.Configuration
     public class NodeSettings : IDisposable
     {
         /// <summary>Version of the protocol the current implementation supports.</summary>
-        public int SupportedProtocolVersion { get; private set; }
+        public int SupportedProtocolVersion { get; }
 
         /// <summary>Factory to create instance logger.</summary>
         public ILoggerFactory LoggerFactory { get; private set; }
@@ -104,7 +103,8 @@ namespace Stratis.Bitcoin.Configuration
 
             // Record arguments.
             this.Network = network;
-            this.ProtocolVersion = protocolVersion == 0 ? Networks.ProtocolVersion.SendHeaders.Id : protocolVersion;
+            this.SupportedProtocolVersion = protocolVersion == 0 ? Networks.ProtocolVersion.SendHeaders.Id : protocolVersion;
+            this.ProtocolVersion = protocolVersion;
             this.Agent = agent;
             this.ConfigReader = new TextFileConfiguration(args ?? new string[] { });
 
