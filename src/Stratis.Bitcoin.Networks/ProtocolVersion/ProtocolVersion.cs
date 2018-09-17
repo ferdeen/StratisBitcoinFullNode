@@ -67,7 +67,7 @@ namespace Stratis.Bitcoin.Networks.ProtocolVersion
         public static readonly IProtocolVersion Reject = new ProtocolVersionBase(70002, nameof(Reject).ToLowerInvariant());
 
         /// <summary>
-        /// ! "filter*" commands are disabled without NODE_BLOOM after and including this version.
+        /// "filter*" commands are disabled without NODE_BLOOM after and including this version.
         /// </summary>
         public static readonly IProtocolVersion NoBloom = new ProtocolVersionBase(70011, nameof(NoBloom).ToLowerInvariant());
 
@@ -77,7 +77,7 @@ namespace Stratis.Bitcoin.Networks.ProtocolVersion
         public static readonly IProtocolVersion SendHeaders = new ProtocolVersionBase(70012, nameof(SendHeaders).ToLowerInvariant());
 
         /// <summary>
-        /// ! Version after which witness support potentially exists.
+        /// Version after which witness support potentially exists.
         /// </summary>
         public static readonly IProtocolVersion Witness = new ProtocolVersionBase(70012, nameof(Witness).ToLowerInvariant());
 
@@ -86,7 +86,7 @@ namespace Stratis.Bitcoin.Networks.ProtocolVersion
         protected ProtocolVersionBase(int id, string name) : base(id, name) {}
 
         /// <summary>
-        /// List all versions 
+        /// Gets all version protocol details in a class that derives from <see cref="IProtocolVersion"/>, and the underlying <see cref="ProtocolVersionBase"/> version. 
         /// </summary>
         public static IList<IProtocolVersion> GetAll<T>() where T : Enumeration, IProtocolVersion, new()
         {
