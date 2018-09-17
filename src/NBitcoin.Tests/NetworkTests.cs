@@ -591,7 +591,7 @@ namespace NBitcoin.Tests
         public void StratisProtocolVersionAllItemsCount()
         {
             var stratisItemCount = 1;
-            IEnumerable<IProtocolVersion> list = ProtocolVersionBase.GetAll<StratisProtocolVersion>();
+            IList<IProtocolVersion> list = ProtocolVersionBase.GetAll<StratisProtocolVersion>();
 
             list.Count(x => x is StratisProtocolVersion).Should().Be(stratisItemCount);
             list.Count(x => x is ProtocolVersionBase).Should().Be(BaseProtocolVersionItemCount + stratisItemCount);
@@ -611,7 +611,7 @@ namespace NBitcoin.Tests
             var bitcoinItemCount = 1;
 
             var version = new BitcoinProtocolVersion();
-            IEnumerable<IProtocolVersion> list = ProtocolVersionBase.GetAll<BitcoinProtocolVersion>();
+            IList<IProtocolVersion> list = ProtocolVersionBase.GetAll<BitcoinProtocolVersion>();
 
             list.Count(x => x is BitcoinProtocolVersion).Should().Be(bitcoinItemCount);
             list.Count(x => x is ProtocolVersionBase).Should().Be(BaseProtocolVersionItemCount + bitcoinItemCount);
@@ -623,7 +623,7 @@ namespace NBitcoin.Tests
         {
             ProtocolVersionBase.Protocol.Id.Should().Be(70012);
             ProtocolVersionBase.AltProtocal.Id.Should().Be(70000);
-            ProtocolVersionBase.InitProtocol.Id .Should().Be(209);
+            ProtocolVersionBase.InitProtocol.Id.Should().Be(209);
             ProtocolVersionBase.MinPeers.Id.Should().Be(209);
             ProtocolVersionBase.CAddressTime.Id.Should().Be(31402);
             ProtocolVersionBase.NoBlocksStart.Id.Should().Be(32000);
@@ -640,7 +640,7 @@ namespace NBitcoin.Tests
         [Trait("UnitTest", "UnitTest")]
         public void ProtocolVersionBaseAllItemsCount()
         {
-            IEnumerable<IProtocolVersion> list = ProtocolVersionBase.GetAll<ProtocolVersionBase>();
+            IList<IProtocolVersion> list = ProtocolVersionBase.GetAll<ProtocolVersionBase>();
     
             list.Count(x => x is ProtocolVersionBase).Should().Be(BaseProtocolVersionItemCount);
         }

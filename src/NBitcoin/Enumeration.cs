@@ -46,15 +46,17 @@ namespace NBitcoin
 
             IEnumerable<TReturn> allStaticFields = GetPublicClassConstants(type)
                 .Concat(type.GetNestedTypes(BindingFlags.Public).SelectMany(GetPublicClassConstants))
-                .Select(fi => (TReturn)fi.GetValue(null));
+                .Select(fieldInfo => (TReturn)fieldInfo.GetValue(null));
 
             return allStaticFields;
         }
 
         private static IEnumerable<FieldInfo> GetPublicClassConstants(Type type)
         {
-            return type
-                .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            FieldInfo[] fields = 
+                type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+
+            return fields;
         }
     }
 }

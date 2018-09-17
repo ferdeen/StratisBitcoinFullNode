@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using NBitcoin;
 
 namespace Stratis.Bitcoin.Networks.ProtocolVersion
@@ -87,10 +88,11 @@ namespace Stratis.Bitcoin.Networks.ProtocolVersion
         /// <summary>
         /// List all versions 
         /// </summary>
-        public static IEnumerable<IProtocolVersion> GetAll<T>() where T : Enumeration, IProtocolVersion, new()
+        public static IList<IProtocolVersion> GetAll<T>() where T : Enumeration, IProtocolVersion, new()
         {
-            IEnumerable<IProtocolVersion> list = Enumeration.GetAll<T, IProtocolVersion>();
-            return list;
+            IEnumerable<IProtocolVersion> list = GetAll<T, IProtocolVersion>();
+
+            return list.ToList();
         }
     }
 }
