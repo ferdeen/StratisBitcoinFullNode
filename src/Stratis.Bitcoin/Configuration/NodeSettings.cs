@@ -107,7 +107,7 @@ namespace Stratis.Bitcoin.Configuration
             this.Agent = agent;
             this.ConfigReader = new TextFileConfiguration(args ?? new string[] { });
 
-            // Default setting
+            // Default setting.
             this.SupportedProtocolVersion = Networks.ProtocolVersion.SendHeaders.Id;
 
             // Log arguments.
