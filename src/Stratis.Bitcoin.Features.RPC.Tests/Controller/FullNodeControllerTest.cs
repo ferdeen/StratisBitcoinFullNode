@@ -480,7 +480,7 @@ namespace Stratis.Bitcoin.Features.RPC.Tests.Controller
                 this.fullNode.Object, this.nodeSettings, this.network, this.chain, this.chainState.Object, this.connectionManager.Object);
             GetInfoModel model = this.controller.GetInfo();
 
-            Assert.Equal(this.nodeSettings.SupportedProtocolVersion, model.ProtocolVersion);
+            Assert.Equal(NodeSettings.Default().SupportedProtocolVersion, model.ProtocolVersion);
             Assert.Equal(0, model.RelayFee);
         }
 
