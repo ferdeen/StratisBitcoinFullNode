@@ -13,7 +13,7 @@ namespace Stratis.Bitcoin.Networks.ProtocolVersion
         /// <summary>
         /// short-id-based block download starts with this version.
         /// </summary>
-        public static readonly BitcoinProtocolVersion ShortIdBlocks = new BitcoinProtocolVersion(70014, nameof(ShortIdBlocks).ToLowerInvariant());
+        public static readonly IProtocolVersion ShortIdBlocks = new BitcoinProtocolVersion(70014, nameof(ShortIdBlocks).ToLowerInvariant());
 
         public BitcoinProtocolVersion() { }
 

@@ -13,7 +13,7 @@ namespace Stratis.Bitcoin.Networks.ProtocolVersion
         /// <summary>
         /// Proven headers version.
         /// </summary>
-        public static readonly StratisProtocolVersion ProvenHeaders = new StratisProtocolVersion(70013, nameof(ProvenHeaders).ToLowerInvariant());
+        public static readonly IProtocolVersion ProvenHeaders = new StratisProtocolVersion(70013, nameof(ProvenHeaders).ToLowerInvariant());
 
         public StratisProtocolVersion() { }
 
