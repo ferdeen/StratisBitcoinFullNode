@@ -40,21 +40,20 @@ namespace NBitcoin
 
         public int CompareTo(object other) => this.Id.CompareTo(((Enumeration)other).Id);
 
-        public static IEnumerable<TReturn> GetAll<T, TReturn>() where T : Enumeration, new()
+        public static IEnumerable<TReturn> GetAll<T, TReturn>(bool includeInherited = true) where T : Enumeration, new()
         {
             Type type = typeof(T);
 
-            IEnumerable<TReturn> allStaticFields = GetPublicClassConstants(type)
-                .Concat(type.GetNestedTypes(BindingFlags.Public).SelectMany(GetPublicClassConstants))
+            IEnumerable<TReturn> allStaticFields = GetPublicClassConstants(type, includeInherited)
                 .Select(fieldInfo => (TReturn)fieldInfo.GetValue(null));
 
             return allStaticFields;
         }
 
-        private static IEnumerable<FieldInfo> GetPublicClassConstants(Type type)
-        {
-            FieldInfo[] fields = 
-                type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+        private static IEnumerable<FieldInfo> GetPublicClassConstants(Type type, bool includeInherited = true)
+        {            
+            FieldInfo[] fields = type
+                .GetFields(BindingFlags.Public | BindingFlags.Static | (includeInherited ? BindingFlags.FlattenHierarchy : BindingFlags.DeclaredOnly));
 
             return fields;
         }

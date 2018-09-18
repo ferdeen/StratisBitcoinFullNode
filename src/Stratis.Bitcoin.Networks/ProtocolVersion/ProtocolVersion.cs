@@ -88,9 +88,9 @@ namespace Stratis.Bitcoin.Networks.ProtocolVersion
         /// <summary>
         /// Gets all version protocol details in a class that derives from <see cref="IProtocolVersion"/>, and the underlying <see cref="ProtocolVersionBase"/> version. 
         /// </summary>
-        public static IList<IProtocolVersion> GetAll<T>() where T : Enumeration, IProtocolVersion, new()
+        public static IList<IProtocolVersion> GetAll<T>(bool includeInherited = true) where T : Enumeration, IProtocolVersion, new()
         {
-            IEnumerable<IProtocolVersion> list = GetAll<T, IProtocolVersion>();
+            IEnumerable<IProtocolVersion> list = GetAll<T, IProtocolVersion>(includeInherited);
 
             return list.ToList();
         }

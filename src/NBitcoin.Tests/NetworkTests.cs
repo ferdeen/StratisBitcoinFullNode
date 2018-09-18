@@ -599,6 +599,19 @@ namespace NBitcoin.Tests
 
         [Fact]
         [Trait("UnitTest", "UnitTest")]
+        public void StratisProtocolVersionItemsCount()
+        {
+            var stratisItemCount = 1;
+
+            var version = new BitcoinProtocolVersion();
+            IList<IProtocolVersion> list = ProtocolVersionBase.GetAll<StratisProtocolVersion>(includeInherited: false);
+
+            list.Count(x => x is StratisProtocolVersion).Should().Be(stratisItemCount);
+            list.Count(x => x is ProtocolVersionBase).Should().Be(stratisItemCount);
+        }
+
+        [Fact]
+        [Trait("UnitTest", "UnitTest")]
         public void BitcoinProtocolVersionValidateItems()
         {
             Assert.True(BitcoinProtocolVersion.ShortIdBlocks.Id == 70014);
@@ -616,6 +629,20 @@ namespace NBitcoin.Tests
             list.Count(x => x is BitcoinProtocolVersion).Should().Be(bitcoinItemCount);
             list.Count(x => x is ProtocolVersionBase).Should().Be(BaseProtocolVersionItemCount + bitcoinItemCount);
         }
+
+        [Fact]
+        [Trait("UnitTest", "UnitTest")]
+        public void BitcoinProtocolVersionItemsCount()
+        {
+            var bitcoinItemCount = 1;
+
+            var version = new BitcoinProtocolVersion();
+            IList<IProtocolVersion> list = ProtocolVersionBase.GetAll<BitcoinProtocolVersion>(includeInherited: false);
+
+            list.Count(x => x is BitcoinProtocolVersion).Should().Be(bitcoinItemCount);
+            list.Count(x => x is ProtocolVersionBase).Should().Be(bitcoinItemCount);
+        }
+
 
         [Fact]
         [Trait("UnitTest", "UnitTest")]
