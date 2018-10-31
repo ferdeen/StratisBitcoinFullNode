@@ -31,8 +31,8 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules
         /// </summary>
         public PosConsensusRuleEngine(Network network, ILoggerFactory loggerFactory, IDateTimeProvider dateTimeProvider, ConcurrentChain chain, NodeDeployments nodeDeployments,
             ConsensusSettings consensusSettings, ICheckpoints checkpoints, ICoinView utxoSet, IStakeChain stakeChain, IStakeValidator stakeValidator, IChainState chainState,
-            IInvalidBlockHashStore invalidBlockHashStore)
-            : base(network, loggerFactory, dateTimeProvider, chain, nodeDeployments, consensusSettings, checkpoints, utxoSet, chainState, invalidBlockHashStore)
+            IInvalidBlockHashStore invalidBlockHashStore, INodeStats nodeStats)
+            : base(network, loggerFactory, dateTimeProvider, chain, nodeDeployments, consensusSettings, checkpoints, utxoSet, chainState, invalidBlockHashStore, nodeStats)
         {
             this.StakeChain = stakeChain;
             this.StakeValidator = stakeValidator;
@@ -45,11 +45,11 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules
         }
 
         /// <inheritdoc />
-        public override async Task Initialize()
+        public override async Task InitializeAsync(ChainedHeader chainTip)
         {
-            await base.Initialize().ConfigureAwait(false);
+            await base.InitializeAsync(chainTip).ConfigureAwait(false);
 
-            await this.StakeChain.LoadAsync();
+            await this.StakeChain.LoadAsync().ConfigureAwait(false);
         }
     }
 }

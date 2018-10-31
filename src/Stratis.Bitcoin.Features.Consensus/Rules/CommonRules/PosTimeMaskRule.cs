@@ -11,10 +11,6 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
     /// </summary>
     public class PosTimeMaskRule : PartialValidationConsensusRule
     {
-        /// <summary>PoS block's timestamp mask.</summary>
-        /// <remarks>Used to decrease granularity of timestamp. Supposed to be 2^n-1.</remarks>
-        public const uint StakeTimestampMask = 0x0000000F;
-
         public PosFutureDriftRule FutureDriftRule { get; set; }
 
         public override void Initialize()
@@ -39,6 +35,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             this.Logger.LogTrace("Height of block is {0}, block timestamp is {1}, previous block timestamp is {2}, block version is 0x{3:x}.", chainedHeader.Height, chainedHeader.Header.Time, chainedHeader.Previous?.Header.Time, chainedHeader.Header.Version);
 
             var posRuleContext = context as PosRuleContext;
+            posRuleContext.BlockStake = BlockStake.Load(context.ValidationContext.BlockToValidate);
 
             if (posRuleContext.BlockStake.IsProofOfWork() && (chainedHeader.Height > this.Parent.ConsensusParams.LastPOWBlock))
             {
@@ -73,7 +70,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         /// <returns><c>true</c> if block timestamp is equal to transaction timestamp, <c>false</c> otherwise.</returns>
         private bool CheckCoinStakeTimestamp(long blockTime, long transactionTime)
         {
-            return (blockTime == transactionTime) && ((transactionTime & StakeTimestampMask) == 0);
+            return (blockTime == transactionTime) && ((transactionTime & PosConsensusOptions.StakeTimestampMask) == 0);
         }
     }
 }

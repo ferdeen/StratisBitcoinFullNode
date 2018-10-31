@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using Mono.Cecil;
 using NBitcoin;
 using Stratis.Bitcoin.Consensus;
-using Stratis.Bitcoin.Features.SmartContracts.Consensus;
 using Stratis.Bitcoin.Features.SmartContracts.Models;
 using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
@@ -44,12 +43,14 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
         private readonly ConcurrentChain chain;
         private readonly ILogger logger;
         private readonly Network network;
-        private readonly IContractStateRoot stateRoot;
+        private readonly IStateRepositoryRoot stateRoot;
         private readonly IWalletManager walletManager;
         private readonly IWalletTransactionHandler walletTransactionHandler;
         private readonly IAddressGenerator addressGenerator;
         private readonly IContractPrimitiveSerializer contractPrimitiveSerializer;
         private readonly IReceiptRepository receiptRepository;
+        private readonly ICallDataSerializer callDataSerializer;
+        private readonly IMethodParameterStringSerializer methodParameterStringSerializer;
 
         public SmartContractsController(IBroadcasterManager broadcasterManager,
             IBlockStore blockStore,
@@ -58,12 +59,14 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
             IDateTimeProvider dateTimeProvider,
             ILoggerFactory loggerFactory,
             Network network,
-            IContractStateRoot stateRoot,
+            IStateRepositoryRoot stateRoot,
             IWalletManager walletManager,
             IWalletTransactionHandler walletTransactionHandler,
             IAddressGenerator addressGenerator,
             IContractPrimitiveSerializer contractPrimitiveSerializer,
-            IReceiptRepository receiptRepository)
+            IReceiptRepository receiptRepository,
+            ICallDataSerializer callDataSerializer,
+            IMethodParameterStringSerializer methodParameterStringSerializer)
         {
             this.stateRoot = stateRoot;
             this.walletTransactionHandler = walletTransactionHandler;
@@ -77,15 +80,15 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
             this.addressGenerator = addressGenerator;
             this.contractPrimitiveSerializer = contractPrimitiveSerializer;
             this.receiptRepository = receiptRepository;
+            this.callDataSerializer = callDataSerializer;
+            this.methodParameterStringSerializer = methodParameterStringSerializer;
         }
 
         [Route("code")]
         [HttpGet]
         public IActionResult GetCode([FromQuery]string address)
         {
-            this.logger.LogTrace("(){0}:{1}", nameof(address), address);
-
-            uint160 addressNumeric = new Address(address).ToUint160(this.network);
+            uint160 addressNumeric = address.ToUint160(this.network);
             byte[] contractCode = this.stateRoot.GetCode(addressNumeric);
 
             if (contractCode == null || !contractCode.Any())
@@ -102,9 +105,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
                 var decompiler = new CSharpDecompiler(modDefinition, new DecompilerSettings { });
                 // TODO: Update decompiler to display all code, not just this rando FirstOrDefault (given we now allow multiple types)
                 string cSharp = decompiler.DecompileAsString(modDefinition.Types.FirstOrDefault(x => x.FullName != "<Module>"));
-
-                this.logger.LogTrace("(-)");
-
+                
                 return Json(new GetCodeResponse
                 {
                     Message = string.Format("Contract execution code retrieved at {0}", address),
@@ -118,13 +119,9 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
         [HttpGet]
         public IActionResult GetBalance([FromQuery]string address)
         {
-            this.logger.LogTrace("(){0}:{1}", nameof(address), address);
-
-            uint160 addressNumeric = new Address(address).ToUint160(this.network);
+            uint160 addressNumeric = address.ToUint160(this.network);
             ulong balance = this.stateRoot.GetCurrentBalance(addressNumeric);
-
-            this.logger.LogTrace("(-)");
-
+            
             return Json(balance);
         }
 
@@ -132,17 +129,14 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
         [HttpGet]
         public IActionResult GetStorage([FromQuery] GetStorageRequest request)
         {
-            this.logger.LogTrace("(){0}:{1},{2}:{3},{4}:{5}", nameof(request.ContractAddress), request.ContractAddress, nameof(request.DataType), request.DataType, nameof(request.StorageKey), request.StorageKey);
-
             if (!this.ModelState.IsValid)
             {
                 this.logger.LogTrace("(-)[MODELSTATE_INVALID]");
                 return ModelStateErrors.BuildErrorResponse(this.ModelState);
             }
 
-            uint160 addressNumeric = new Address(request.ContractAddress).ToUint160(this.network);
+            uint160 addressNumeric = request.ContractAddress.ToUint160(this.network);
             byte[] storageValue = this.stateRoot.GetStorageValue(addressNumeric, Encoding.UTF8.GetBytes(request.StorageKey));
-            this.logger.LogTrace("(-){0}:{1}", nameof(storageValue), storageValue);
 
             return Json(GetStorageValue(request.DataType, storageValue).ToString());
         }
@@ -176,7 +170,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
         public async Task<IActionResult> ReceiptSearch([FromQuery] string contractAddress, [FromQuery] string eventName)
         {
             // Build the bytes we can use to check for this event.
-            uint160 addressUint160 = new Address(contractAddress).ToUint160(this.network);
+            uint160 addressUint160 = contractAddress.ToUint160(this.network);
             byte[] addressBytes = addressUint160.ToBytes();
             byte[] eventBytes = Encoding.UTF8.GetBytes(eventName);
 
@@ -277,8 +271,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
         [HttpGet]
         public IActionResult GetAddressesWithBalances([FromQuery] string walletName)
         {
-            this.logger.LogTrace("(){0}:{1}", nameof(walletName), walletName);
-
             IEnumerable<IGrouping<HdAddress, UnspentOutputReference>> allSpendable = this.walletManager.GetSpendableTransactionsInWallet(walletName, MinConfirmationsAllChecks).GroupBy(x => x.Address);
             var result = new List<object>();
             foreach (IGrouping<HdAddress, UnspentOutputReference> grouping in allSpendable)
@@ -289,9 +281,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
                     Sum = grouping.Sum(x => x.Transaction.SpendableAmount(false))
                 });
             }
-
-            this.logger.LogTrace("(-)");
-
+            
             return Json(result);
         }
 
@@ -309,11 +299,16 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
             ulong gasPrice = ulong.Parse(request.GasPrice);
             ulong gasLimit = ulong.Parse(request.GasLimit);
 
-            SmartContractCarrier carrier;
+            ContractTxData txData;
             if (request.Parameters != null && request.Parameters.Any())
-                carrier = SmartContractCarrier.CreateContract(ReflectionVirtualMachine.VmVersion, request.ContractCode.HexToByteArray(), gasPrice, new Gas(gasLimit), request.Parameters);
+            {
+                var methodParameters = this.methodParameterStringSerializer.Deserialize(request.Parameters);
+                txData = new ContractTxData(ReflectionVirtualMachine.VmVersion, (Gas)gasPrice, (Gas)gasLimit, request.ContractCode.HexToByteArray(), methodParameters);
+            }
             else
-                carrier = SmartContractCarrier.CreateContract(ReflectionVirtualMachine.VmVersion, request.ContractCode.HexToByteArray(), gasPrice, new Gas(gasLimit));
+            {
+                txData = new ContractTxData(ReflectionVirtualMachine.VmVersion, (Gas)gasPrice, (Gas)gasLimit, request.ContractCode.HexToByteArray());
+            }
 
             HdAddress senderAddress = null;
             if (!string.IsNullOrWhiteSpace(request.Sender))
@@ -325,7 +320,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
 
             ulong totalFee = (gasPrice * gasLimit) + Money.Parse(request.FeeAmount);
             var walletAccountReference = new WalletAccountReference(request.WalletName, request.AccountName);
-            var recipient = new Recipient { Amount = request.Amount ?? "0", ScriptPubKey = new Script(carrier.Serialize()) };
+            var recipient = new Recipient { Amount = request.Amount ?? "0", ScriptPubKey = new Script(this.callDataSerializer.Serialize(txData)) };
             var context = new TransactionBuildContext(this.network)
             {
                 AccountReference = walletAccountReference,
@@ -341,7 +336,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
             {
                 Transaction transaction = this.walletTransactionHandler.BuildTransaction(context);
                 uint160 contractAddress = this.addressGenerator.GenerateAddress(transaction.GetHash(), 0);
-                return BuildCreateContractTransactionResponse.Succeeded(transaction, context.TransactionFee, contractAddress.ToAddress(this.network));
+                return BuildCreateContractTransactionResponse.Succeeded(transaction, context.TransactionFee, contractAddress.ToBase58Address(this.network));
             }
             catch (Exception exception)
             {
@@ -362,13 +357,18 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
 
             ulong gasPrice = ulong.Parse(request.GasPrice);
             ulong gasLimit = ulong.Parse(request.GasLimit);
-            uint160 addressNumeric = new Address(request.ContractAddress).ToUint160(this.network);
+            uint160 addressNumeric = request.ContractAddress.ToUint160(this.network);
 
-            SmartContractCarrier carrier;
+            ContractTxData txData;
             if (request.Parameters != null && request.Parameters.Any())
-                carrier = SmartContractCarrier.CallContract(ReflectionVirtualMachine.VmVersion, addressNumeric, request.MethodName, gasPrice, new Gas(gasLimit), request.Parameters);
+            {
+                var methodParameters = this.methodParameterStringSerializer.Deserialize(request.Parameters);
+                txData = new ContractTxData(ReflectionVirtualMachine.VmVersion, (Gas)gasPrice, (Gas)gasLimit, addressNumeric, request.MethodName, methodParameters);
+            }
             else
-                carrier = SmartContractCarrier.CallContract(ReflectionVirtualMachine.VmVersion, addressNumeric, request.MethodName, gasPrice, new Gas(gasLimit));
+            {
+                txData = new ContractTxData(ReflectionVirtualMachine.VmVersion, (Gas)gasPrice, (Gas)gasLimit, addressNumeric, request.MethodName);
+            }
 
             HdAddress senderAddress = null;
             if (!string.IsNullOrWhiteSpace(request.Sender))
@@ -387,7 +387,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
                 SelectedInputs = selectedInputs,
                 MinConfirmations = MinConfirmationsAllChecks,
                 WalletPassword = request.Password,
-                Recipients = new[] { new Recipient { Amount = request.Amount, ScriptPubKey = new Script(carrier.Serialize()) } }.ToList()
+                Recipients = new[] { new Recipient { Amount = request.Amount, ScriptPubKey = new Script(this.callDataSerializer.Serialize(txData)) } }.ToList()
             };
 
             try

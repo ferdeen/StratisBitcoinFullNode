@@ -15,7 +15,7 @@
         public static readonly ConsensusError BadBlockWeight = new ConsensusError("bad-blk-weight", "weight limit failed");
         public static readonly ConsensusError BadDiffBits = new ConsensusError("bad-diffbits", "incorrect proof of work");
         public static readonly ConsensusError TimeTooOld = new ConsensusError("time-too-old", "block's timestamp is too early");
-        public static readonly ConsensusError TimeTooNew = new ConsensusError("time-too-new", "block timestamp too far in the future");
+        public static readonly ConsensusError TimeTooNew = new ConsensusError("time-too-new", "timestamp too far in the future");
         public static readonly ConsensusError BadVersion = new ConsensusError("bad-version", "block version rejected");
         public static readonly ConsensusError BadMerkleRoot = new ConsensusError("bad-txnmrklroot", "hashMerkleRoot mismatch");
         public static readonly ConsensusError BadBlockLength = new ConsensusError("bad-blk-length", "size limits failed");
@@ -59,6 +59,7 @@
         public static readonly ConsensusError BadStakeBlock = new ConsensusError("bad-stake-block", "bad stake block");
         public static readonly ConsensusError PrevStakeNull = new ConsensusError("prev-stake-null", "previous stake is not found");
         public static readonly ConsensusError StakeHashInvalidTarget = new ConsensusError("proof-of-stake-hash-invalid-target", "proof-of-stake hash did not meet target protocol");
+        public static readonly ConsensusError EmptyCoinstake = new ConsensusError("empty-coinstake", "empty-coinstake");
 
         public static readonly ConsensusError ModifierNotFound = new ConsensusError("modifier-not-found", "unable to get last modifier");
         public static readonly ConsensusError FailedSelectBlock = new ConsensusError("failed-select-block", "unable to select block at round");
@@ -72,5 +73,10 @@
         public static readonly ConsensusError ProofOfWorkTooHigh = new ConsensusError("proof-of-work-too-heigh", "proof of work too high");
 
         public static readonly ConsensusError CheckpointViolation = new ConsensusError("checkpoint-violation", "block header hash does not match the checkpointed value");
+
+        // Proven header validation errors.
+        public static readonly ConsensusError BadProvenHeaderMerkleProofSize = new ConsensusError("proven-header-merkle-proof-size", "proven header's merkle proof size must be less than 512 bytes");
+        public static readonly ConsensusError BadProvenHeaderCoinstakeSize = new ConsensusError("proven-header-coinstake-size", "proven header's coinstake size must be less than 1,000,000 bytes");
+        public static readonly ConsensusError BadProvenHeaderSignatureSize = new ConsensusError("proven-header-signature-size", "proven header's signature size must be less than 80 bytes");
     }
 }

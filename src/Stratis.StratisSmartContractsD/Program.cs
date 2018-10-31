@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using NBitcoin;
-using NBitcoin.Networks;
 using NBitcoin.Protocol;
 using Stratis.Bitcoin.Builder;
 using Stratis.Bitcoin.Configuration;
@@ -11,6 +9,7 @@ using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.RPC;
 using Stratis.Bitcoin.Features.SmartContracts;
 using Stratis.Bitcoin.Features.SmartContracts.Networks;
+using Stratis.Bitcoin.Features.SmartContracts.PoS;
 using Stratis.Bitcoin.Features.SmartContracts.Wallet;
 using Stratis.Bitcoin.Utilities;
 
@@ -27,8 +26,7 @@ namespace Stratis.StratisSmartContractsD
         {
             try
             {
-                Network network = NetworkRegistration.Register(new SmartContractPosTest());
-                NodeSettings nodeSettings = new NodeSettings(network, ProtocolVersion.ALT_PROTOCOL_VERSION, "StratisSC", args: args);
+                NodeSettings nodeSettings = new NodeSettings(new SmartContractPosTest(), ProtocolVersion.ALT_PROTOCOL_VERSION, "StratisSC", args: args);
 
                 Bitcoin.IFullNode node = new FullNodeBuilder()
                     .UseNodeSettings(nodeSettings)
