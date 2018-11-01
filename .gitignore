@@ -253,3 +253,7 @@ ModelManifest.xml
 /src/Stratis.Bitcoin.Tests/Stratis.Bitcoin.Tests/TestData
 /src/Stratis.StratisD/Logs
 /src/Stratis.BitcoinD/Logs
+/DecreaseDifficultyAndLastPOWBlockHeight.patch
+/DecreaseCoinstakeMinConfirmation.patch
+/AllowClientConnection_in_IBD.patch
+/AddDnsSeedAddress.patch

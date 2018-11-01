@@ -5,7 +5,7 @@
     },
     "Stratis.StratisD Test": {
       "commandName": "Project",
-      "commandLineArgs": "-testnet"
+      "commandLineArgs": "-connect=192.168.98.140:37221 -datadir=D:\\repos\\InternalTestnet_Data\\Runtime\\NodeEA"
     },
     "Stratis.StratisD Test with RPC": {
       "commandName": "Project",
