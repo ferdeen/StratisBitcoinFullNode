@@ -5,7 +5,7 @@
     },
     "Stratis.StratisD Test": {
       "commandName": "Project",
-      "commandLineArgs": "-connect=192.168.98.140:37221 -datadir=D:\\repos\\InternalTestnet_Data\\Runtime\\NodeEA"
+      "commandLineArgs": "-testnet"
     },
     "Stratis.StratisD Test with RPC": {
       "commandName": "Project",
@@ -18,6 +18,10 @@
     "Stratis.StratisD Test No assumevalid": {
       "commandName": "Project",
       "commandLineArgs": "-testnet -assumevalid=0 -checkpoints=false"
+    },
+    "Stratis.StratisD PeerFlooding - InternalMainNet - Connect to NodeAC": {
+      "commandName": "Project",
+      "commandLineArgs": "-connect=192.168.98.102:16178 -datadir=D:\\repos\\InternalTestnet_Data\\Runtime\\NodeEA -inventorybroadcastmax=2147483647 -limitancestorcount=2147483647 -limitancestorsize=2147483647 -limitdescendantcount=2147483647 -limitdescendantsize=2147483647"
     }
   }
 }
