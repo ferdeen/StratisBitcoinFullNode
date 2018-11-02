@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
+using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.Interfaces;
 using Stratis.Bitcoin.P2P.Peer;
@@ -30,7 +31,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         /// Maximum number of inventory items to send per transmission.
         /// Limits the impact of low-fee transaction floods.
         /// </summary>
-        private const int InventoryBroadcastMax = 7 * InventoryBroadcastInterval;
+        private readonly int InventoryBroadcastMax;
 
         /// <summary>Memory pool validator for validating transactions.</summary>
         private readonly IMempoolValidator validator;
@@ -58,6 +59,9 @@ namespace Stratis.Bitcoin.Features.MemoryPool
 
         /// <summary>The network that this component is running on.</summary>
         private readonly Network network;
+
+        /// <summary>Cofiguration settings.</summary>
+        private readonly NodeSettings nodeSettings;
 
         /// <summary>
         /// Inventory transaction to send.
@@ -95,7 +99,8 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             IInitialBlockDownloadState initialBlockDownloadState,
             Signals.Signals signals,
             ILoggerFactory loggerFactory,
-            Network network)
+            Network network,
+            NodeSettings nodeSettings)
         {
             this.validator = validator;
             this.mempoolManager = mempoolManager;
@@ -106,12 +111,15 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             this.loggerFactory = loggerFactory;
             this.network = network;
+            this.nodeSettings = nodeSettings;
 
             this.lockObject = new object();
             this.inventoryTxToSend = new HashSet<uint256>();
             this.filterInventoryKnown = new HashSet<uint256>();
             this.isPeerWhitelistedForRelay = false;
             this.isBlocksOnlyMode = false;
+            
+            this.InventoryBroadcastMax = this.nodeSettings.ConfigReader.GetOrDefault("inventorybroadcastmax", 7 * InventoryBroadcastInterval);
         }
 
         /// <summary>Time of last memory pool request in unix time.</summary>
@@ -134,7 +142,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         /// <inheritdoc />
         public override object Clone()
         {
-            return new MempoolBehavior(this.validator, this.mempoolManager, this.orphans, this.connectionManager, this.initialBlockDownloadState, this.signals, this.loggerFactory, this.network);
+            return new MempoolBehavior(this.validator, this.mempoolManager, this.orphans, this.connectionManager, this.initialBlockDownloadState, this.signals, this.loggerFactory, this.network, this.nodeSettings);
         }
 
         /// <summary>
