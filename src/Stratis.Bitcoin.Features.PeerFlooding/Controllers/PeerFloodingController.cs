@@ -19,7 +19,7 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
         public PeerFloodingController(int totalruns = 10000)
         {
             this.totalruns = totalruns;
-            this.nodeWallets = InternalNetworkNodeWallet.Mapping.Where(nw => nw.Value.HasFunds == true).Take(10);
+            this.nodeWallets = InternalNetworkNodeWallet.Map.Where(nw => nw.Value.HasFunds == true).Take(10);
         }
 
         [Route("OverrideMempoolSettings")]
@@ -29,7 +29,6 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
             var count = this.nodeWallets.Count();
 
             /* TODO - Pass params to override mempool contants
-             * 
             MempoolBehaviour    InventoryBroadcastMax
             MempoolValidator    DefaultAncestorLimit
             MempoolValidator    DefaultAncestorSizeLimit
@@ -48,10 +47,10 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
 
                 var response = await $"http://localhost:37221/api/wallet/recover".PostJsonAsync(new WalletRecoveryRequest
                 {
-                    Name = InternalNetworkNodeWallet.Mapping[nodeWalletKey].WalletName,
-                    Password = InternalNetworkNodeWallet.Mapping[nodeWalletKey].Password,
-                    Passphrase = InternalNetworkNodeWallet.Mapping[nodeWalletKey].Password,
-                    Mnemonic = InternalNetworkNodeWallet.Mapping[nodeWalletKey].MnemonicPhrase,
+                    Name = InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName,
+                    Password = InternalNetworkNodeWallet.Map[nodeWalletKey].Password,
+                    Passphrase = InternalNetworkNodeWallet.Map[nodeWalletKey].Password,
+                    Mnemonic = InternalNetworkNodeWallet.Map[nodeWalletKey].MnemonicPhrase,
                     CreationDate = new DateTime(2017, 10, 13)
                 }).ReceiveString();
             });

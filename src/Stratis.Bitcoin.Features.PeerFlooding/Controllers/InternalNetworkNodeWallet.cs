@@ -6,7 +6,10 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
 {
     internal class InternalNetworkNodeWallet
     {
-        public static readonly IReadOnlyDictionary<string, NodeWallet> Mapping = new Dictionary<string, NodeWallet>()
+        /// <summary>
+        /// Internal Mainnet Wallets. The information is taken from https://github.com/stratisproject/InternalTestnet/tree/master/Documentation/Wallets.xlsx.
+        /// </summary>
+        public static readonly IReadOnlyDictionary<string, NodeWallet> Map = new Dictionary<string, NodeWallet>()
         {
             { "NodeAA", new NodeWallet("192.168.98.100", "Wallet-AAA", "render share trim sea scrub version assume lunch border dance rib invest", "node", "TU2gsxokHYVHvTewpyXuxae42Zvbkv9AC3") },
             { "NodeAB", new NodeWallet("192.168.98.101", "Wallet-ABA", "brick expose stable afraid approve shine aisle session knock rebuild term sadness", "node", "TSng2vftTK6siFpXkNNcrwfRt6747NhtpR") },
