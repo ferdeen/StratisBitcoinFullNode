@@ -29,6 +29,7 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
             var count = this.nodeWallets.Count();
 
             /* TODO - Pass params to override mempool contants
+             * 
             MempoolBehaviour    InventoryBroadcastMax
             MempoolValidator    DefaultAncestorLimit
             MempoolValidator    DefaultAncestorSizeLimit
@@ -39,9 +40,9 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
 
         [Route("RecoverWallets")]
         [HttpGet]
-        public async Task RecoverWalletsAsync()
+        public void RecoverWallets()
         {
-            foreach (var nodeWallet in this.nodeWallets)
+            Parallel.ForEach(this.nodeWallets, async (nodeWallet) =>
             {
                 string nodeWalletKey = nodeWallet.Key;
 
@@ -51,9 +52,9 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
                     Password = InternalNetworkNodeWallet.Mapping[nodeWalletKey].Password,
                     Passphrase = InternalNetworkNodeWallet.Mapping[nodeWalletKey].Password,
                     Mnemonic = InternalNetworkNodeWallet.Mapping[nodeWalletKey].MnemonicPhrase,
-                    CreationDate = new DateTime(2018, 10, 13)
+                    CreationDate = new DateTime(2017, 10, 13)
                 }).ReceiveString();
-            }
+            });
         }
 
         /* TODO - create next api endpoints.
