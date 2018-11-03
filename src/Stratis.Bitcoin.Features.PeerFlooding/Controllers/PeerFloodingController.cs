@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 using Flurl;
 using Flurl.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Models;
 
 namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
@@ -36,14 +34,14 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
             {
                 string nodeWalletKey = nodeWallet.Key;
 
-                var response = await $"http://localhost:37221/api/wallet/recover".PostJsonAsync(new WalletRecoveryRequest
+                await $"http://localhost:37221/api/wallet/recover".PostJsonAsync(new WalletRecoveryRequest
                 {
                     Name = InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName,
                     Password = InternalNetworkNodeWallet.Map[nodeWalletKey].Password,
                     Passphrase = InternalNetworkNodeWallet.Map[nodeWalletKey].Password,
                     Mnemonic = InternalNetworkNodeWallet.Map[nodeWalletKey].MnemonicPhrase,
                     CreationDate = new DateTime(2017, 10, 13)
-                }).ReceiveString();
+                });
             });
         }
 

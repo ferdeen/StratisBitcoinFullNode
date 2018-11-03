@@ -7,7 +7,7 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
     internal class InternalNetworkNodeWallet
     {
         /// <summary>
-        /// Internal Mainnet Wallets. The information is taken from https://github.com/stratisproject/InternalTestnet/tree/master/Documentation/Wallets.xlsx.
+        /// Internal MainNet Wallets. Source : https://github.com/stratisproject/InternalTestnet/tree/master/Documentation/Wallets.xlsx.
         /// </summary>
         public static readonly IReadOnlyDictionary<string, NodeWallet> Map = new Dictionary<string, NodeWallet>()
         {
