@@ -26,7 +26,7 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
         public PeerFloodingController(NodeSettings nodeSettings, ILoggerFactory loggerFactory, int totalruns = 10000)
         {
             this.totalruns = totalruns;
-            this.nodeWallets = InternalNetworkNodeWallet.Map.Where(nw => nw.Value.HasFunds == true).Take(1);
+            this.nodeWallets = InternalNetworkNodeWallet.Map.Where(nw => nw.Value.HasFunds == true).Take(10);
             this.floodFileName = nodeSettings.DataFolder.RootPath + @"\flood.dat";
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             new FileStream(this.floodFileName, FileMode.OpenOrCreate);
@@ -55,9 +55,9 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
 
         [Route("SendTransactionsWithLowFee")]
         [HttpGet]
-        public IActionResult SendTransactionsWithLowFee()
+        public async Task<IActionResult> SendTransactionsWithLowFeeAsync()
         {
-            Parallel.ForEach(this.nodeWallets, async (nodeWallet) =>
+            foreach (var nodeWallet in this.nodeWallets)
             {
                 string nodeWalletKey = nodeWallet.Key;
 
@@ -87,15 +87,17 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
                     await this.SendTransactionAsync(hex);
 
                     System.IO.File.AppendAllText(this.floodFileName, hex + Environment.NewLine);
+
+                    this.logger.LogTrace("Sent {0}/(1,000) transactions.", i);
                 }
 
                 this.logger.LogTrace("{0} : sent 10,000 transactions.", InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName);
-            });
+            }
 
             var model = new PeerFloodingGeneralInfoModel()
             {
                 FloodFilePath = this.floodFileName,
-                Info = "Creating file.  Please reset the network before flooding it with 10,000 hex transations stored in this file."
+                Info = "Creating file.  Please reset the network before flooding it with 10,000 hex transations stored in this file.  Backup this file and all the wallet files, and restore back into NodeEA's data folder."
             };
 
             return this.Json(model);
@@ -105,13 +107,18 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
         [HttpGet]
         public async Task<IActionResult> FloodNetworkAsync()
         {
-            var hexTransactions = this.ReadLines(this.floodFileName);
-
-            this.logger.LogTrace("Flooding newtwork with transactions in {0}", this.floodFileName);
-
-            foreach (var hexTransaction in hexTransactions)
+            using (StreamReader reader = System.IO.File.OpenText(this.floodFileName))
             {
-                await this.SendTransactionAsync(hexTransaction);
+                this.logger.LogTrace("Flooding newtwork with transactions in {0}", this.floodFileName);
+
+                string line = string.Empty;
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    await this.SendTransactionAsync(line);
+
+                    this.logger.LogTrace("Sent {0}.", line);
+                }
             }
 
             var model = new PeerFloodingGeneralInfoModel()
@@ -137,19 +144,6 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
                 if (ex.Message.Contains("code 400"))
                 {
                     Thread.Sleep(60000);
-                }
-            }
-        }
-
-        private IEnumerable<string> ReadLines(string filePath)
-        {
-            using (StreamReader reader = System.IO.File.OpenText(filePath))
-            {
-                string line = string.Empty;
-
-                while ((line = reader.ReadLine()) != null)
-                {
-                    yield return line;
                 }
             }
         }

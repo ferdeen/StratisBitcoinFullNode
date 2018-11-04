@@ -21,7 +21,7 @@
     },
     "Stratis.StratisD PeerFlooding - InternalMainNet - Connect to NodeAC": {
       "commandName": "Project",
-      "commandLineArgs": "-connect=192.168.98.102:16178 -datadir=D:\\repos\\InternalTestnet_Data\\Runtime\\NodeEA -inventorybroadcastmax=2147483647 -limitancestorcount=2147483647 -limitancestorsize=2147483647 -limitdescendantcount=2147483647 -limitdescendantsize=2147483647"
+      "commandLineArgs": "-connect=192.168.98.102:16178 -datadir=D:\\repos\\InternalTestnet_Data\\Runtime\\NodeEA -inventorybroadcastmax=2147483647 -limitancestorcount=2147483647 -limitancestorsize=2147483 -limitdescendantcount=2147483647 -limitdescendantsize=2147483"
     }
   }
 }
