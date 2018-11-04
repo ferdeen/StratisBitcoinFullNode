@@ -1,29 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Flurl;
 using Flurl.Http;
 using Microsoft.AspNetCore.Mvc;
+using Stratis.Bitcoin.Configuration;
+using Stratis.Bitcoin.Controllers;
 using Stratis.Bitcoin.Features.Wallet.Models;
 
 namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
 {
     [Route("api/[controller]")]
-    public class PeerFloodingController : Controller
+    public class PeerFloodingController : FeatureController
     {
         private readonly int totalruns;
         private readonly IEnumerable<KeyValuePair<string, InternalNetworkNodeWallet.NodeWallet>> nodeWallets;
-        private readonly List<string> transactionHexList;
+        private readonly string floodFileName;
 
-        public PeerFloodingController(int totalruns = 10000)
+        public PeerFloodingController(NodeSettings nodeSettings, int totalruns = 10000)
         {
             this.totalruns = totalruns;
-            this.nodeWallets = InternalNetworkNodeWallet.Map.Where(nw => nw.Value.HasFunds == true).Take(10);
-            this.transactionHexList = new List<string>();
+            this.nodeWallets = InternalNetworkNodeWallet.Map.Where(nw => nw.Value.HasFunds == true).Take(1);
+            this.floodFileName = nodeSettings.DataFolder.RootPath + @"\flood.dat";
+            new FileStream(this.floodFileName, FileMode.OpenOrCreate);
         }
 
         [Route("RecoverWallets")]
@@ -47,7 +50,7 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
 
         [Route("SendTransactionsWithLowFee")]
         [HttpGet]
-        public void SendTransactionsWithLowFee()
+        public IActionResult SendTransactionsWithLowFee()
         {
             Parallel.ForEach(this.nodeWallets, async (nodeWallet) =>
             {
@@ -76,41 +79,70 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
 
                     string hex = (newTransaction as ExpandoObject).FirstOrDefault(x => x.Key == "hex").Value.ToString();
 
-                    // Save transaction hex, for flooding the network after the network has been reset.
-                    this.transactionHexList.Add(hex);
+                    await this.SendTransactionAsync(hex);
 
-                    try
-                    {
-                        var response = await "http://localhost:37221/api/wallet/send-transaction"
-                            .PostJsonAsync(new SendTransactionRequest(hex));
-
-                        Thread.Sleep(5000);
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ex.Message.Contains("code 400"))
-                        {
-                            Thread.Sleep(60000);
-                        }
-                    }
+                    System.IO.File.AppendAllText(this.floodFileName, hex + Environment.NewLine);
                 }
             });
+
+            var model = new PeerFloodingGeneralInfoModel()
+            {
+                FloodFilePath = this.floodFileName,
+                Info = "Creating file.  Please reset the network before flooding it with 10,000 hex transations stored in this file."
+            };
+
+            return this.Json(model);
         }
 
-        /*
         [Route("FloodNetwork")]
         [HttpGet]
-        public void FloodNetwork()
+        public async Task<IActionResult> FloodNetworkAsync()
         {
-            // gets hex values from disk 
-            // if it doesn't exist return fail
+            var hexTransactions = this.ReadLines(this.floodFileName);
 
-            // for each hex send
+            foreach (var hexTransaction in hexTransactions)
+            {
+                await this.SendTransactionAsync(hexTransaction);
+            }
 
-            // check desintation recieved funds
+            var model = new PeerFloodingGeneralInfoModel()
+            {
+                FloodFilePath = this.floodFileName,
+                Info = "Once flooded check that this node has been banned."
+            };
 
-            // check NodeEA this node (has been banned).
+            return this.Json(model);
         }
-        */
+
+        private async Task SendTransactionAsync(string hex)
+        {
+            try
+            {
+                var response = await "http://localhost:37221/api/wallet/send-transaction"
+                    .PostJsonAsync(new SendTransactionRequest(hex));
+
+                Thread.Sleep(5000);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("code 400"))
+                {
+                    Thread.Sleep(60000);
+                }
+            }
+        }
+
+        private IEnumerable<string> ReadLines(string filePath)
+        {
+            using (StreamReader reader = System.IO.File.OpenText(filePath))
+            {
+                string line = string.Empty;
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    yield return line;
+                }
+            }
+        }
     }
 }
