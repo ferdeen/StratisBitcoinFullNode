@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Flurl;
 using Flurl.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Controllers;
 using Stratis.Bitcoin.Features.Wallet.Models;
@@ -20,12 +21,14 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
         private readonly int totalruns;
         private readonly IEnumerable<KeyValuePair<string, InternalNetworkNodeWallet.NodeWallet>> nodeWallets;
         private readonly string floodFileName;
+        private readonly ILogger logger;
 
-        public PeerFloodingController(NodeSettings nodeSettings, int totalruns = 10000)
+        public PeerFloodingController(NodeSettings nodeSettings, ILoggerFactory loggerFactory, int totalruns = 10000)
         {
             this.totalruns = totalruns;
             this.nodeWallets = InternalNetworkNodeWallet.Map.Where(nw => nw.Value.HasFunds == true).Take(1);
             this.floodFileName = nodeSettings.DataFolder.RootPath + @"\flood.dat";
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             new FileStream(this.floodFileName, FileMode.OpenOrCreate);
         }
 
@@ -45,6 +48,8 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
                     Mnemonic = InternalNetworkNodeWallet.Map[nodeWalletKey].MnemonicPhrase,
                     CreationDate = new DateTime(2017, 10, 13)
                 });
+
+                this.logger.LogTrace("{0} : recovered", InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName);
             });
         }
 
@@ -83,6 +88,8 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
 
                     System.IO.File.AppendAllText(this.floodFileName, hex + Environment.NewLine);
                 }
+
+                this.logger.LogTrace("{0} : sent 10,000 transactions.", InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName);
             });
 
             var model = new PeerFloodingGeneralInfoModel()
@@ -100,6 +107,8 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
         {
             var hexTransactions = this.ReadLines(this.floodFileName);
 
+            this.logger.LogTrace("Flooding newtwork with transactions in {0}", this.floodFileName);
+
             foreach (var hexTransaction in hexTransactions)
             {
                 await this.SendTransactionAsync(hexTransaction);
@@ -108,7 +117,7 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
             var model = new PeerFloodingGeneralInfoModel()
             {
                 FloodFilePath = this.floodFileName,
-                Info = "Once flooded check that this node has been banned."
+                Info = "Once flooded check that this node has been banned, by connected from nodes."
             };
 
             return this.Json(model);
