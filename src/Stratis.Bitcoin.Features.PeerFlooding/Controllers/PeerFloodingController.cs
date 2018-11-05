@@ -53,45 +53,49 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
             });
         }
 
-        [Route("SendTransactionsWithLowFee")]
+        [Route("SendTransactionsinBulk")]
         [HttpGet]
-        public async Task<IActionResult> SendTransactionsWithLowFeeAsync()
+        public async Task<IActionResult> SendTransactionsinBulkAsync()
         {
+            var unusedWalletAddresses = new List<string>();
+
             foreach (var nodeWallet in this.nodeWallets)
             {
                 string nodeWalletKey = nodeWallet.Key;
 
-                var unusedAddress = await "http://localhost:37221/api/wallet/unusedAddress"
-                    .SetQueryParams(new { walletName = InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName, accountName = "account 0" })
-                    .GetJsonAsync<string>();
+                IEnumerable<string> unusedaddresses = await "http://localhost:37221/api/wallet/unusedAddresses"
+                    .SetQueryParams(new { walletName = InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName, accountName = "account 0", count = 50 })
+                    .GetJsonAsync<IEnumerable<string>>();
 
+                unusedWalletAddresses.AddRange(unusedaddresses);
+            }
+
+            var rnd = new Random();
+
+            for (int i = 0; i <= this.totalruns; i++)
+            {
                 var request = new BuildTransactionRequest
                 {
-                    WalletName = InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName,
+                    WalletName = InternalNetworkNodeWallet.Map["NodeEA"].WalletName,
                     AccountName = "account 0",
                     AllowUnconfirmed = true,
                     Amount = "1",
                     FeeType = "low",
-                    Password = InternalNetworkNodeWallet.Map[nodeWalletKey].Password,
-                    DestinationAddress = unusedAddress.ToString()
+                    Password = InternalNetworkNodeWallet.Map["NodeEA"].Password,
+                    DestinationAddress = unusedWalletAddresses[rnd.Next(unusedWalletAddresses.Count)]
                 };
 
-                for (int i = 0; i <= 1000; i++)
-                {
-                    var newTransaction = await "http://localhost:37221/api/wallet/build-transaction"
-                        .PostJsonAsync(request)
-                        .ReceiveJson();
+                var newTransaction = await "http://localhost:37221/api/wallet/build-transaction"
+                    .PostJsonAsync(request)
+                    .ReceiveJson();
 
-                    string hex = (newTransaction as ExpandoObject).FirstOrDefault(x => x.Key == "hex").Value.ToString();
+                string hex = (newTransaction as ExpandoObject).FirstOrDefault(x => x.Key == "hex").Value.ToString();
 
-                    await this.SendTransactionAsync(hex);
+                await this.SendTransactionAsync(hex);
 
-                    System.IO.File.AppendAllText(this.floodFileName, hex + Environment.NewLine);
+                System.IO.File.AppendAllText(this.floodFileName, hex + Environment.NewLine);
 
-                    this.logger.LogTrace("Sent {0}/(1,000) transactions.", i);
-                }
-
-                this.logger.LogTrace("{0} : sent 10,000 transactions.", InternalNetworkNodeWallet.Map[nodeWalletKey].WalletName);
+                this.logger.LogTrace($"Sent {i}/{this.totalruns} transactions.");
             }
 
             var model = new PeerFloodingGeneralInfoModel()
@@ -136,8 +140,6 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
             {
                 var response = await "http://localhost:37221/api/wallet/send-transaction"
                     .PostJsonAsync(new SendTransactionRequest(hex));
-
-                Thread.Sleep(5000);
             }
             catch (Exception ex)
             {

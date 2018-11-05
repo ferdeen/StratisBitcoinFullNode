@@ -157,7 +157,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bip-0009", "bip-0009", "{A1
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.Bitcoin.Features.PoA.IntegrationTests", "Stratis.Bitcoin.Features.PoA.IntegrationTests\Stratis.Bitcoin.Features.PoA.IntegrationTests.csproj", "{73CDDF96-B025-46F1-AFF1-121B3830AD81}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stratis.Bitcoin.Features.PeerFlooding", "Stratis.Bitcoin.Features.PeerFlooding\Stratis.Bitcoin.Features.PeerFlooding.csproj", "{6CC54CF9-02EE-4103-9682-B486BD6776B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.Bitcoin.Features.PeerFlooding", "Stratis.Bitcoin.Features.PeerFlooding\Stratis.Bitcoin.Features.PeerFlooding.csproj", "{6CC54CF9-02EE-4103-9682-B486BD6776B6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
