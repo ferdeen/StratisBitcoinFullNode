@@ -140,6 +140,8 @@ namespace Stratis.Bitcoin.Features.PeerFlooding.Controllers
             {
                 var response = await "http://localhost:37221/api/wallet/send-transaction"
                     .PostJsonAsync(new SendTransactionRequest(hex));
+
+                Thread.Sleep(5000);
             }
             catch (Exception ex)
             {
